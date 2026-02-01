@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>信号指纹采集测试</title>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f4f4f9;
@@ -13,12 +14,13 @@
             color: #333;
         }
 
-        h1 { font-size: 1.2rem; text-align: center; color: #444; }
+        h1 { font-size: 1.2rem; text-align: center; color: #444; margin-bottom: 15px; }
+        h3 { font-size: 1rem; color: #444; margin: 15px 0 10px; }
 
         /* 测试区域样式 */
         #test-pad {
             width: 100%;
-            height: 250px;
+            height: 280px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -29,29 +31,72 @@
             color: white;
             font-size: 1.2rem;
             user-select: none;
-            touch-action: none; /* 关键：禁止浏览器默认的滚动和缩放，以便捕获滑动 */
+            touch-action: none;
             margin-bottom: 20px;
             position: relative;
             overflow: hidden;
             cursor: crosshair;
         }
 
-        #test-pad span {
+        #test-pad .hint {
             pointer-events: none;
-            opacity: 0.8;
-            font-size: 0.9rem;
+            opacity: 0.9;
+            font-size: 0.85rem;
+            text-align: center;
+            z-index: 10;
         }
 
         #test-pad:active {
             transform: scale(0.99);
         }
 
+        /* 滑动轨迹画布 */
+        #trace-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 风险评分 */
+        .risk-score-container {
+            background: linear-gradient(135deg, #2d3436 0%, #000 100%);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+        }
+        .risk-score-label { font-size: 0.85rem; opacity: 0.8; margin-bottom: 8px; }
+        .risk-score {
+            font-size: 3rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        .risk-level {
+            font-size: 0.9rem;
+            margin-top: 8px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .risk-low { background: #00b894; }
+        .risk-medium { background: #fdcb6e; color: #333; }
+        .risk-high { background: #d63031; }
+        .risk-details { font-size: 0.75rem; margin-top: 10px; opacity: 0.7; }
+
         /* 实时数据显示面板 */
         .dashboard {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .dashboard-3col {
+            grid-template-columns: repeat(3, 1fr);
         }
 
         .metric-card {
@@ -59,12 +104,30 @@
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        .metric-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 4px; }
-        .metric-value { font-weight: bold; font-family: monospace; color: #222; font-size: 1.1rem;}
-        .highlight { color: #d63031; } /* 用于高亮可疑数据 */
+        .metric-card.warning { border-left: 3px solid #fdcb6e; }
+        .metric-card.danger { border-left: 3px solid #d63031; }
+        .metric-card.success { border-left: 3px solid #00b894; }
+
+        .metric-label { color: #888; font-size: 0.7rem; display: block; margin-bottom: 3px; }
+        .metric-value { font-weight: bold; font-family: monospace; color: #222; font-size: 0.95rem; }
+        .metric-sub { font-size: 0.65rem; color: #aaa; margin-top: 2px; }
+        .highlight { color: #d63031; }
+        .safe { color: #00b894; }
+
+        /* 分组标题 */
+        .section-title {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 15px 0 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
         /* 历史日志表格 */
         .log-container {
@@ -72,207 +135,1159 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
         }
         
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #eee; }
         th { background-color: #f8f9fa; color: #666; font-weight: 600; }
         tr:last-child td { border-bottom: none; }
         
         /* 状态指示点 */
         .dot {
-            height: 10px; width: 10px;
+            height: 8px; width: 8px;
             background-color: #bbb;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 5px;
+            margin-right: 4px;
         }
-        .active { background-color: #00b894; box-shadow: 0 0 8px #00b894; }
+        .active { background-color: #00b894; box-shadow: 0 0 6px #00b894; }
 
         /* 提示信息 */
         .tips {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #666;
-            margin-top: 20px;
+            margin-top: 15px;
             background: #fff3cd;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px;
+            border-radius: 8px;
             border-left: 4px solid #ffc107;
+        }
+        .tips strong { display: block; margin-bottom: 6px; }
+        .tips ul { margin: 0; padding-left: 18px; }
+        .tips li { margin-bottom: 4px; }
+
+        /* 设备指纹区域 */
+        .fingerprint-section {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .fp-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.75rem;
+        }
+        .fp-row:last-child { border-bottom: none; }
+        .fp-label { color: #888; }
+        .fp-value { font-family: monospace; color: #333; }
+
+        /* 轨迹分析图表 */
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .mini-chart {
+            height: 60px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        /* 可折叠面板 */
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+        .collapsible::after {
+            content: ' ▼';
+            font-size: 0.7rem;
+        }
+        .collapsible.collapsed::after {
+            content: ' ▶';
+        }
+        .panel-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .panel-content.collapsed {
+            max-height: 0;
+        }
+
+        /* 环境检测警告 */
+        .env-warnings {
+            background: #ffe8e8;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #d63031;
+        }
+        .env-warnings.clean {
+            background: #e8ffe8;
+            border-left-color: #00b894;
+        }
+        .env-warning-item {
+            font-size: 0.75rem;
+            padding: 3px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
     </style>
 </head>
 <body>
 
-    <h1>🤖 交互信号分析器</h1>
+    <h1>🤖 交互信号分析器 v2.0</h1>
 
+    <!-- 风险评分 -->
+    <div class="risk-score-container">
+        <div class="risk-score-label">实时风控评分</div>
+        <div class="risk-score" id="risk-score">--</div>
+        <div class="risk-level risk-low" id="risk-level">等待检测</div>
+        <div class="risk-details" id="risk-details">在测试区域进行操作以开始分析</div>
+    </div>
+
+    <!-- 测试区域 -->
     <div id="test-pad">
-        <div style="font-size: 2rem; margin-bottom: 10px;">👇</div>
-        <div>在此区域 点击、长按 或 滑动</div>
-        <span style="margin-top: 10px;">(支持多指触控与压感)</span>
-    </div>
-
-    <div class="dashboard">
-        <div class="metric-card">
-            <span class="metric-label">压力值 (Pressure)</span>
-            <div class="metric-value" id="val-pressure">0.000</div>
-        </div>
-        <div class="metric-card">
-            <span class="metric-label">接触面积 (WxH)</span>
-            <div class="metric-value" id="val-area">0 x 0</div>
-        </div>
-        <div class="metric-card">
-            <span class="metric-label">设备类型 (PointerType)</span>
-            <div class="metric-value" id="val-type">-</div>
-        </div>
-        <div class="metric-card">
-            <span class="metric-label">可信度 (isTrusted)</span>
-            <div class="metric-value" id="val-trusted">-</div>
+        <canvas id="trace-canvas"></canvas>
+        <div class="hint">
+            <div style="font-size: 2rem; margin-bottom: 10px;">👇</div>
+            <div>在此区域 点击、长按 或 滑动</div>
+            <div style="margin-top: 8px; font-size: 0.8rem;">(支持多指触控与压感，滑动轨迹可视化)</div>
         </div>
     </div>
 
-    <h3>📜 历史记录 (最近 5 次操作)</h3>
+    <!-- 环境检测 -->
+    <div class="section-title">🔍 环境风险检测</div>
+    <div class="env-warnings" id="env-warnings">
+        <div class="env-warning-item">正在检测...</div>
+    </div>
+
+    <!-- 基础指标 -->
+    <div class="section-title collapsible" onclick="togglePanel('basic-panel')">📊 基础交互指标</div>
+    <div class="panel-content" id="basic-panel">
+        <div class="dashboard">
+            <div class="metric-card" id="card-pressure">
+                <span class="metric-label">压力值 (Pressure)</span>
+                <div class="metric-value" id="val-pressure">0.000</div>
+                <div class="metric-sub">正常: 0.2~0.8 波动</div>
+            </div>
+            <div class="metric-card" id="card-area">
+                <span class="metric-label">接触面积 (WxH)</span>
+                <div class="metric-value" id="val-area">0 x 0</div>
+                <div class="metric-sub">正常: 10~50 px</div>
+            </div>
+            <div class="metric-card" id="card-type">
+                <span class="metric-label">设备类型 (PointerType)</span>
+                <div class="metric-value" id="val-type">-</div>
+            </div>
+            <div class="metric-card" id="card-trusted">
+                <span class="metric-label">事件可信度 (isTrusted)</span>
+                <div class="metric-value" id="val-trusted">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 滑动轨迹分析 -->
+    <div class="section-title collapsible" onclick="togglePanel('swipe-panel')">📈 滑动轨迹分析</div>
+    <div class="panel-content" id="swipe-panel">
+        <div class="dashboard dashboard-3col">
+            <div class="metric-card" id="card-velocity">
+                <span class="metric-label">平均速度</span>
+                <div class="metric-value" id="val-velocity">0 px/s</div>
+            </div>
+            <div class="metric-card" id="card-acceleration">
+                <span class="metric-label">加速度变化</span>
+                <div class="metric-value" id="val-acceleration">0</div>
+            </div>
+            <div class="metric-card" id="card-direction">
+                <span class="metric-label">方向变化次数</span>
+                <div class="metric-value" id="val-direction">0</div>
+            </div>
+            <div class="metric-card" id="card-curvature">
+                <span class="metric-label">轨迹曲率</span>
+                <div class="metric-value" id="val-curvature">0</div>
+                <div class="metric-sub">真人轨迹有自然弯曲</div>
+            </div>
+            <div class="metric-card" id="card-jitter">
+                <span class="metric-label">抖动指数</span>
+                <div class="metric-value" id="val-jitter">0</div>
+                <div class="metric-sub">真人有微小抖动</div>
+            </div>
+            <div class="metric-card" id="card-straightness">
+                <span class="metric-label">直线度</span>
+                <div class="metric-value" id="val-straightness">0%</div>
+                <div class="metric-sub">机器往往100%</div>
+            </div>
+        </div>
+        <!-- 速度曲线图 -->
+        <div class="chart-container">
+            <div class="chart-label">速度变化曲线</div>
+            <canvas id="velocity-chart" class="mini-chart" height="60"></canvas>
+        </div>
+    </div>
+
+    <!-- 时间特征分析 -->
+    <div class="section-title collapsible" onclick="togglePanel('time-panel')">⏱️ 时间特征分析</div>
+    <div class="panel-content" id="time-panel">
+        <div class="dashboard dashboard-3col">
+            <div class="metric-card" id="card-duration">
+                <span class="metric-label">操作时长</span>
+                <div class="metric-value" id="val-duration">0 ms</div>
+            </div>
+            <div class="metric-card" id="card-interval">
+                <span class="metric-label">采样间隔</span>
+                <div class="metric-value" id="val-interval">0 ms</div>
+                <div class="metric-sub">正常: 8~16ms</div>
+            </div>
+            <div class="metric-card" id="card-interval-std">
+                <span class="metric-label">间隔标准差</span>
+                <div class="metric-value" id="val-interval-std">0</div>
+                <div class="metric-sub">太均匀可疑</div>
+            </div>
+            <div class="metric-card" id="card-pause">
+                <span class="metric-label">停顿次数</span>
+                <div class="metric-value" id="val-pause">0</div>
+            </div>
+            <div class="metric-card" id="card-samples">
+                <span class="metric-label">采样点数</span>
+                <div class="metric-value" id="val-samples">0</div>
+            </div>
+            <div class="metric-card" id="card-timestamp">
+                <span class="metric-label">时间戳精度</span>
+                <div class="metric-value" id="val-timestamp">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 压力特征分析 -->
+    <div class="section-title collapsible" onclick="togglePanel('pressure-panel')">💪 压力特征分析</div>
+    <div class="panel-content" id="pressure-panel">
+        <div class="dashboard dashboard-3col">
+            <div class="metric-card" id="card-pressure-min">
+                <span class="metric-label">最小压力</span>
+                <div class="metric-value" id="val-pressure-min">0</div>
+            </div>
+            <div class="metric-card" id="card-pressure-max">
+                <span class="metric-label">最大压力</span>
+                <div class="metric-value" id="val-pressure-max">0</div>
+            </div>
+            <div class="metric-card" id="card-pressure-avg">
+                <span class="metric-label">平均压力</span>
+                <div class="metric-value" id="val-pressure-avg">0</div>
+            </div>
+            <div class="metric-card" id="card-pressure-std">
+                <span class="metric-label">压力标准差</span>
+                <div class="metric-value" id="val-pressure-std">0</div>
+                <div class="metric-sub">无变化可疑</div>
+            </div>
+            <div class="metric-card" id="card-pressure-change">
+                <span class="metric-label">压力变化次数</span>
+                <div class="metric-value" id="val-pressure-change">0</div>
+            </div>
+            <div class="metric-card" id="card-force-touch">
+                <span class="metric-label">Force Touch</span>
+                <div class="metric-value" id="val-force-touch">-</div>
+            </div>
+        </div>
+        <!-- 压力曲线图 -->
+        <div class="chart-container">
+            <div class="chart-label">压力变化曲线</div>
+            <canvas id="pressure-chart" class="mini-chart" height="60"></canvas>
+        </div>
+    </div>
+
+    <!-- 坐标特征分析 -->
+    <div class="section-title collapsible" onclick="togglePanel('coord-panel')">📍 坐标特征分析</div>
+    <div class="panel-content" id="coord-panel">
+        <div class="dashboard dashboard-3col">
+            <div class="metric-card">
+                <span class="metric-label">起始坐标</span>
+                <div class="metric-value" id="val-start-coord">-</div>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">结束坐标</span>
+                <div class="metric-value" id="val-end-coord">-</div>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">总位移</span>
+                <div class="metric-value" id="val-distance">0 px</div>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">实际路径长度</span>
+                <div class="metric-value" id="val-path-length">0 px</div>
+            </div>
+            <div class="metric-card" id="card-efficiency">
+                <span class="metric-label">路径效率</span>
+                <div class="metric-value" id="val-efficiency">0%</div>
+                <div class="metric-sub">机器接近100%</div>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">坐标小数精度</span>
+                <div class="metric-value" id="val-coord-precision">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 高级指标 -->
+    <div class="section-title collapsible" onclick="togglePanel('advanced-panel')">🧪 高级风控指标</div>
+    <div class="panel-content" id="advanced-panel">
+        <div class="dashboard">
+            <div class="metric-card" id="card-entropy">
+                <span class="metric-label">轨迹熵值</span>
+                <div class="metric-value" id="val-entropy">0</div>
+                <div class="metric-sub">越高越随机/真实</div>
+            </div>
+            <div class="metric-card" id="card-bezier">
+                <span class="metric-label">贝塞尔匹配度</span>
+                <div class="metric-value" id="val-bezier">0%</div>
+                <div class="metric-sub">机器轨迹匹配度高</div>
+            </div>
+            <div class="metric-card" id="card-angle-std">
+                <span class="metric-label">角度变化标准差</span>
+                <div class="metric-value" id="val-angle-std">0°</div>
+            </div>
+            <div class="metric-card" id="card-speed-consistency">
+                <span class="metric-label">速度一致性</span>
+                <div class="metric-value" id="val-speed-consistency">0%</div>
+                <div class="metric-sub">太一致可疑</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设备指纹 -->
+    <div class="section-title collapsible" onclick="togglePanel('fingerprint-panel')">🔐 设备指纹</div>
+    <div class="panel-content" id="fingerprint-panel">
+        <div class="fingerprint-section" id="device-fingerprint">
+            <div class="fp-row"><span class="fp-label">User Agent</span><span class="fp-value" id="fp-ua">-</span></div>
+            <div class="fp-row"><span class="fp-label">平台</span><span class="fp-value" id="fp-platform">-</span></div>
+            <div class="fp-row"><span class="fp-label">屏幕分辨率</span><span class="fp-value" id="fp-screen">-</span></div>
+            <div class="fp-row"><span class="fp-label">设备像素比</span><span class="fp-value" id="fp-dpr">-</span></div>
+            <div class="fp-row"><span class="fp-label">触控点数</span><span class="fp-value" id="fp-touch">-</span></div>
+            <div class="fp-row"><span class="fp-label">语言</span><span class="fp-value" id="fp-lang">-</span></div>
+            <div class="fp-row"><span class="fp-label">时区</span><span class="fp-value" id="fp-tz">-</span></div>
+            <div class="fp-row"><span class="fp-label">WebGL渲染器</span><span class="fp-value" id="fp-webgl">-</span></div>
+            <div class="fp-row"><span class="fp-label">Canvas指纹</span><span class="fp-value" id="fp-canvas">-</span></div>
+            <div class="fp-row"><span class="fp-label">AudioContext</span><span class="fp-value" id="fp-audio">-</span></div>
+            <div class="fp-row"><span class="fp-label">硬件并发数</span><span class="fp-value" id="fp-cores">-</span></div>
+            <div class="fp-row"><span class="fp-label">内存大小</span><span class="fp-value" id="fp-memory">-</span></div>
+            <div class="fp-row"><span class="fp-label">连接类型</span><span class="fp-value" id="fp-connection">-</span></div>
+        </div>
+    </div>
+
+    <!-- 历史记录 -->
+    <h3>📜 历史记录 (最近 10 次操作)</h3>
     <div class="log-container">
         <table>
             <thead>
                 <tr>
                     <th>类型</th>
-                    <th>耗时(ms)</th>
-                    <th>位移(px)</th>
-                    <th>平均压力</th>
+                    <th>时长</th>
+                    <th>位移</th>
+                    <th>压力</th>
+                    <th>速度</th>
+                    <th>风险</th>
                 </tr>
             </thead>
             <tbody id="log-body">
-                </tbody>
+            </tbody>
         </table>
     </div>
 
     <div class="tips">
-        <strong>如何分辨真假？</strong><br>
-        1. <b>压力:</b> 真人通常在 0.2~0.8 之间波动；脚本常为 0, 0.5 或 1.0 固定值。<br>
-        2. <b>面积:</b> 真人手指通常有具体数值 (如 20x20)；脚本常为 0x0 或 1x1。<br>
-        3. <b>位移:</b> 即使是点击，真人也会有微小像素抖动；脚本往往是 0px 完美静止。
+        <strong>🎯 风控指标说明</strong>
+        <ul>
+            <li><b>压力:</b> 真人通常在 0.2~0.8 之间波动；脚本常为 0, 0.5 或 1.0 固定值</li>
+            <li><b>面积:</b> 真人手指通常 10~50px；脚本常为 0x0 或 1x1</li>
+            <li><b>位移:</b> 即使是点击，真人也会有微小像素抖动；脚本往往 0px 完美静止</li>
+            <li><b>轨迹曲率:</b> 真人滑动有自然弧度；机器通常走直线</li>
+            <li><b>速度一致性:</b> 真人速度有自然波动；机器速度往往恒定</li>
+            <li><b>采样间隔标准差:</b> 真人触控事件间隔略有波动；机器往往非常均匀</li>
+            <li><b>路径效率:</b> 真人滑动效率约70-90%；机器接近100%</li>
+        </ul>
     </div>
 
     <script>
+        // ==================== 全局变量 ====================
         const pad = document.getElementById('test-pad');
         const logBody = document.getElementById('log-body');
+        const canvas = document.getElementById('trace-canvas');
+        const ctx = canvas.getContext('2d');
         
         // 状态变量
         let startTime = 0;
         let startX = 0;
         let startY = 0;
+        let isTracking = false;
+        
+        // 轨迹数据收集
+        let tracePoints = [];  // [{x, y, t, pressure, width, height}]
+        let velocities = [];
+        let pressures = [];
+        let timestamps = [];
+        let angles = [];
+        
+        // 统计变量
         let maxPressure = 0;
+        let minPressure = 1;
         let pressureSum = 0;
         let pressureCount = 0;
-        let isTracking = false;
+        let lastEventTime = 0;
+        let intervalSum = 0;
+        let intervalCount = 0;
+        let intervals = [];
+        let pauseCount = 0;
+        let directionChanges = 0;
+        let lastDirection = null;
+        let pathLength = 0;
+        let forceTouch = false;
 
-        // UI 元素引用
-        const uiPressure = document.getElementById('val-pressure');
-        const uiArea = document.getElementById('val-area');
-        const uiType = document.getElementById('val-type');
-        const uiTrusted = document.getElementById('val-trusted');
+        // ==================== 初始化 ====================
+        function initCanvas() {
+            const rect = pad.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
 
-        // 1. 按下事件 (Pointer Down)
+        // ==================== 设备指纹采集 ====================
+        function collectFingerprint() {
+            document.getElementById('fp-ua').textContent = navigator.userAgent.substring(0, 50) + '...';
+            document.getElementById('fp-platform').textContent = navigator.platform || 'N/A';
+            document.getElementById('fp-screen').textContent = `${screen.width}x${screen.height}`;
+            document.getElementById('fp-dpr').textContent = window.devicePixelRatio;
+            document.getElementById('fp-touch').textContent = navigator.maxTouchPoints || 0;
+            document.getElementById('fp-lang').textContent = navigator.language;
+            document.getElementById('fp-tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('fp-cores').textContent = navigator.hardwareConcurrency || 'N/A';
+            document.getElementById('fp-memory').textContent = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'N/A';
+            
+            // WebGL
+            try {
+                const gl = document.createElement('canvas').getContext('webgl');
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                document.getElementById('fp-webgl').textContent = debugInfo ? 
+                    gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).substring(0, 30) + '...' : 'N/A';
+            } catch(e) {
+                document.getElementById('fp-webgl').textContent = '不支持';
+            }
+            
+            // Canvas 指纹
+            try {
+                const cv = document.createElement('canvas');
+                const cx = cv.getContext('2d');
+                cx.textBaseline = 'top';
+                cx.font = '14px Arial';
+                cx.fillText('Canvas Fingerprint 🎨', 2, 2);
+                const hash = cv.toDataURL().slice(-20);
+                document.getElementById('fp-canvas').textContent = hash;
+            } catch(e) {
+                document.getElementById('fp-canvas').textContent = 'N/A';
+            }
+            
+            // AudioContext
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                document.getElementById('fp-audio').textContent = audioCtx.sampleRate + ' Hz';
+            } catch(e) {
+                document.getElementById('fp-audio').textContent = 'N/A';
+            }
+            
+            // 网络连接
+            if (navigator.connection) {
+                document.getElementById('fp-connection').textContent = navigator.connection.effectiveType || 'N/A';
+            } else {
+                document.getElementById('fp-connection').textContent = 'N/A';
+            }
+        }
+        collectFingerprint();
+
+        // ==================== 环境风险检测 ====================
+        function detectEnvironmentRisks() {
+            const warnings = [];
+            
+            // 检测 Webdriver
+            if (navigator.webdriver) {
+                warnings.push({ level: 'high', msg: '⚠️ 检测到 WebDriver (自动化工具)' });
+            }
+            
+            // 检测 Phantom
+            if (window._phantom || window.callPhantom) {
+                warnings.push({ level: 'high', msg: '⚠️ 检测到 PhantomJS' });
+            }
+            
+            // 检测 Selenium
+            if (window.document.documentElement.getAttribute('selenium') || 
+                window.document.documentElement.getAttribute('webdriver') ||
+                window.document.documentElement.getAttribute('driver')) {
+                warnings.push({ level: 'high', msg: '⚠️ 检测到 Selenium 特征' });
+            }
+            
+            // 检测 HeadlessChrome
+            if (/HeadlessChrome/.test(navigator.userAgent)) {
+                warnings.push({ level: 'high', msg: '⚠️ 检测到 Headless Chrome' });
+            }
+            
+            // 检测缺失的浏览器特征
+            if (!window.chrome && /Chrome/.test(navigator.userAgent)) {
+                warnings.push({ level: 'medium', msg: '⚠️ Chrome 对象缺失' });
+            }
+            
+            // 检测触控能力不匹配
+            if (navigator.maxTouchPoints === 0 && /Mobile|Android|iPhone/.test(navigator.userAgent)) {
+                warnings.push({ level: 'medium', msg: '⚠️ 移动设备UA但无触控能力' });
+            }
+            
+            // 检测 plugins 异常
+            if (navigator.plugins.length === 0 && !/Mobile|Android|iPhone/.test(navigator.userAgent)) {
+                warnings.push({ level: 'low', msg: '⚠️ 浏览器插件列表为空' });
+            }
+            
+            // 检测语言不匹配
+            if (navigator.languages && navigator.languages.length === 0) {
+                warnings.push({ level: 'low', msg: '⚠️ 语言列表为空' });
+            }
+            
+            // 检测 Permission 异常
+            if (navigator.permissions) {
+                navigator.permissions.query({ name: 'notifications' }).then(result => {
+                    if (result.state === 'denied' && result.onchange === null) {
+                        // 可能的异常
+                    }
+                }).catch(() => {});
+            }
+            
+            // 检测开发者工具
+            const devToolsOpen = window.outerWidth - window.innerWidth > 160 || 
+                                 window.outerHeight - window.innerHeight > 160;
+            if (devToolsOpen) {
+                warnings.push({ level: 'low', msg: 'ℹ️ 开发者工具可能已打开' });
+            }
+            
+            // 检测屏幕尺寸异常
+            if (screen.width < 200 || screen.height < 200) {
+                warnings.push({ level: 'medium', msg: '⚠️ 屏幕尺寸异常小' });
+            }
+            
+            // 显示结果
+            const container = document.getElementById('env-warnings');
+            if (warnings.length === 0) {
+                container.className = 'env-warnings clean';
+                container.innerHTML = '<div class="env-warning-item">✅ 未检测到明显的自动化环境风险</div>';
+            } else {
+                container.className = 'env-warnings';
+                container.innerHTML = warnings.map(w => 
+                    `<div class="env-warning-item">${w.msg}</div>`
+                ).join('');
+            }
+            
+            return warnings;
+        }
+        detectEnvironmentRisks();
+
+        // ==================== 绘制轨迹 ====================
+        function drawTrace(x, y, pressure, isStart = false) {
+            const rect = pad.getBoundingClientRect();
+            const localX = x - rect.left;
+            const localY = y - rect.top;
+            
+            if (isStart) {
+                ctx.beginPath();
+                ctx.moveTo(localX, localY);
+            } else {
+                ctx.lineTo(localX, localY);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + pressure * 0.7})`;
+                ctx.lineWidth = 2 + pressure * 4;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(localX, localY);
+            }
+            
+            // 绘制压力点
+            ctx.beginPath();
+            ctx.arc(localX, localY, 3 + pressure * 5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + pressure * 0.5})`;
+            ctx.fill();
+        }
+        
+        function clearTrace() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // ==================== 数学工具函数 ====================
+        function calculateStandardDeviation(arr) {
+            if (arr.length === 0) return 0;
+            const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+            const squareDiffs = arr.map(value => Math.pow(value - mean, 2));
+            return Math.sqrt(squareDiffs.reduce((a, b) => a + b, 0) / arr.length);
+        }
+        
+        function calculateEntropy(arr) {
+            if (arr.length < 2) return 0;
+            const rounded = arr.map(v => Math.round(v * 100) / 100);
+            const counts = {};
+            rounded.forEach(v => counts[v] = (counts[v] || 0) + 1);
+            const probs = Object.values(counts).map(c => c / arr.length);
+            return -probs.reduce((sum, p) => sum + (p > 0 ? p * Math.log2(p) : 0), 0);
+        }
+        
+        function calculateAngle(x1, y1, x2, y2) {
+            return Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+        }
+        
+        function distance(x1, y1, x2, y2) {
+            return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        }
+
+        // ==================== 贝塞尔曲线拟合检测 ====================
+        function detectBezierPattern(points) {
+            if (points.length < 10) return 0;
+            
+            // 简化的贝塞尔检测：检查点是否落在理想曲线上
+            const start = points[0];
+            const end = points[points.length - 1];
+            const mid = points[Math.floor(points.length / 2)];
+            
+            // 计算实际轨迹与二次贝塞尔曲线的偏差
+            let totalDeviation = 0;
+            for (let i = 0; i < points.length; i++) {
+                const t = i / (points.length - 1);
+                const expectedX = (1-t)**2 * start.x + 2*(1-t)*t * mid.x + t**2 * end.x;
+                const expectedY = (1-t)**2 * start.y + 2*(1-t)*t * mid.y + t**2 * end.y;
+                totalDeviation += distance(points[i].x, points[i].y, expectedX, expectedY);
+            }
+            
+            const avgDeviation = totalDeviation / points.length;
+            const pathLen = distance(start.x, start.y, end.x, end.y);
+            
+            // 偏差越小，越像贝塞尔曲线（可能是机器生成）
+            const matchScore = Math.max(0, 100 - (avgDeviation / Math.max(pathLen, 1)) * 500);
+            return matchScore;
+        }
+
+        // ==================== 风险评分计算 ====================
+        function calculateRiskScore(data) {
+            let score = 100; // 满分100，扣分制
+            const details = [];
+            
+            // 1. isTrusted 检查 (最重要)
+            if (!data.isTrusted) {
+                score -= 40;
+                details.push('事件不可信(-40)');
+            }
+            
+            // 2. 压力检查
+            if (data.avgPressure === 0 || data.avgPressure === 0.5 || data.avgPressure === 1) {
+                score -= 15;
+                details.push('压力异常固定(-15)');
+            }
+            if (data.pressureStd < 0.01 && data.duration > 100) {
+                score -= 10;
+                details.push('压力无变化(-10)');
+            }
+            
+            // 3. 面积检查
+            if (data.avgWidth === 0 || data.avgHeight === 0) {
+                score -= 10;
+                details.push('接触面积为0(-10)');
+            }
+            
+            // 4. 轨迹检查
+            if (data.distance === 0 && data.duration > 50) {
+                score -= 5;
+                details.push('完全无位移(-5)');
+            }
+            
+            // 5. 直线度检查
+            if (data.straightness > 98 && data.distance > 50) {
+                score -= 10;
+                details.push('轨迹过于笔直(-10)');
+            }
+            
+            // 6. 路径效率检查
+            if (data.pathEfficiency > 99 && data.distance > 30) {
+                score -= 8;
+                details.push('路径效率过高(-8)');
+            }
+            
+            // 7. 速度一致性检查
+            if (data.speedConsistency > 95 && data.samples > 10) {
+                score -= 8;
+                details.push('速度过于一致(-8)');
+            }
+            
+            // 8. 采样间隔检查
+            if (data.intervalStd < 0.5 && data.samples > 10) {
+                score -= 8;
+                details.push('采样间隔过于均匀(-8)');
+            }
+            
+            // 9. 抖动检查
+            if (data.jitter < 0.5 && data.duration > 200) {
+                score -= 5;
+                details.push('无自然抖动(-5)');
+            }
+            
+            // 10. 贝塞尔匹配检查
+            if (data.bezierMatch > 90 && data.samples > 20) {
+                score -= 8;
+                details.push('疑似贝塞尔曲线(-8)');
+            }
+            
+            // 11. 熵值检查
+            if (data.entropy < 1 && data.samples > 10) {
+                score -= 5;
+                details.push('轨迹熵值过低(-5)');
+            }
+            
+            // 12. 坐标精度检查
+            if (data.coordPrecision === 0) {
+                score -= 5;
+                details.push('坐标无小数精度(-5)');
+            }
+            
+            return { score: Math.max(0, score), details };
+        }
+
+        // ==================== 绘制图表 ====================
+        function drawVelocityChart(velocities) {
+            const chartCanvas = document.getElementById('velocity-chart');
+            const chartCtx = chartCanvas.getContext('2d');
+            const width = chartCanvas.offsetWidth;
+            const height = 60;
+            
+            chartCanvas.width = width * window.devicePixelRatio;
+            chartCanvas.height = height * window.devicePixelRatio;
+            chartCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            
+            chartCtx.clearRect(0, 0, width, height);
+            chartCtx.fillStyle = '#f8f9fa';
+            chartCtx.fillRect(0, 0, width, height);
+            
+            if (velocities.length < 2) return;
+            
+            const maxVel = Math.max(...velocities) || 1;
+            chartCtx.beginPath();
+            chartCtx.strokeStyle = '#667eea';
+            chartCtx.lineWidth = 2;
+            
+            velocities.forEach((v, i) => {
+                const x = (i / (velocities.length - 1)) * width;
+                const y = height - (v / maxVel) * (height - 10) - 5;
+                if (i === 0) chartCtx.moveTo(x, y);
+                else chartCtx.lineTo(x, y);
+            });
+            chartCtx.stroke();
+        }
+        
+        function drawPressureChart(pressures) {
+            const chartCanvas = document.getElementById('pressure-chart');
+            const chartCtx = chartCanvas.getContext('2d');
+            const width = chartCanvas.offsetWidth;
+            const height = 60;
+            
+            chartCanvas.width = width * window.devicePixelRatio;
+            chartCanvas.height = height * window.devicePixelRatio;
+            chartCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            
+            chartCtx.clearRect(0, 0, width, height);
+            chartCtx.fillStyle = '#f8f9fa';
+            chartCtx.fillRect(0, 0, width, height);
+            
+            if (pressures.length < 2) return;
+            
+            chartCtx.beginPath();
+            chartCtx.strokeStyle = '#e84393';
+            chartCtx.lineWidth = 2;
+            
+            pressures.forEach((p, i) => {
+                const x = (i / (pressures.length - 1)) * width;
+                const y = height - p * (height - 10) - 5;
+                if (i === 0) chartCtx.moveTo(x, y);
+                else chartCtx.lineTo(x, y);
+            });
+            chartCtx.stroke();
+        }
+
+        // ==================== 更新仪表盘 ====================
+        function updateDashboard(e, status) {
+            const p = e.pressure.toFixed(3);
+            document.getElementById('val-pressure').innerText = p;
+            const pressureCard = document.getElementById('card-pressure');
+            if (p === "0.500" || p === "0.000" || p === "1.000") {
+                document.getElementById('val-pressure').style.color = "#d63031";
+                pressureCard.className = 'metric-card danger';
+            } else {
+                document.getElementById('val-pressure').style.color = "#222";
+                pressureCard.className = 'metric-card success';
+            }
+
+            const w = e.width.toFixed(1);
+            const h = e.height.toFixed(1);
+            document.getElementById('val-area').innerText = `${w} x ${h}`;
+            const areaCard = document.getElementById('card-area');
+            if (w === "0.0" || h === "0.0") {
+                areaCard.className = 'metric-card danger';
+            } else {
+                areaCard.className = 'metric-card success';
+            }
+
+            document.getElementById('val-type').innerText = e.pointerType.toUpperCase();
+            
+            const trusted = document.getElementById('val-trusted');
+            trusted.innerText = e.isTrusted ? "TRUE ✓" : "FALSE ✗";
+            trusted.style.color = e.isTrusted ? "#00b894" : "#d63031";
+            document.getElementById('card-trusted').className = e.isTrusted ? 'metric-card success' : 'metric-card danger';
+            
+            // Force Touch 检测
+            if (e.force && e.force > 0) {
+                forceTouch = true;
+                document.getElementById('val-force-touch').innerText = e.force.toFixed(3);
+            }
+        }
+
+        // ==================== 事件处理 ====================
         pad.addEventListener('pointerdown', (e) => {
-            // 必须捕获指针，否则滑动出区域后会丢失事件
             pad.setPointerCapture(e.pointerId);
             
             isTracking = true;
-            startTime = performance.now(); // 高精度时间
+            startTime = performance.now();
             startX = e.clientX;
             startY = e.clientY;
+            lastEventTime = startTime;
             
-            // 重置统计
+            // 重置所有统计
+            tracePoints = [];
+            velocities = [];
+            pressures = [];
+            timestamps = [];
+            angles = [];
+            intervals = [];
+            
             maxPressure = e.pressure;
+            minPressure = e.pressure;
             pressureSum = e.pressure;
             pressureCount = 1;
+            intervalSum = 0;
+            intervalCount = 0;
+            pauseCount = 0;
+            directionChanges = 0;
+            lastDirection = null;
+            pathLength = 0;
+            forceTouch = false;
+            
+            // 记录第一个点
+            tracePoints.push({
+                x: e.clientX,
+                y: e.clientY,
+                t: startTime,
+                pressure: e.pressure,
+                width: e.width,
+                height: e.height
+            });
+            pressures.push(e.pressure);
+            timestamps.push(startTime);
 
+            clearTrace();
+            drawTrace(e.clientX, e.clientY, e.pressure, true);
             updateDashboard(e, '按下');
-            pad.style.background = 'linear-gradient(135deg, #fd79a8 0%, #e84393 100%)'; // 变色反馈
-            pad.innerHTML = `<div>检测中...</div>`;
+            
+            pad.style.background = 'linear-gradient(135deg, #fd79a8 0%, #e84393 100%)';
+            pad.querySelector('.hint').innerHTML = `<div>检测中... 采样: <span id="sample-count">1</span></div>`;
         });
 
-        // 2. 移动事件 (Pointer Move) - 即使是点击，手指也会有微动
         pad.addEventListener('pointermove', (e) => {
             if (!isTracking) return;
 
-            // 记录压力波动
+            const now = performance.now();
+            const interval = now - lastEventTime;
+            
+            // 记录采样间隔
+            intervals.push(interval);
+            intervalSum += interval;
+            intervalCount++;
+            
+            // 检测停顿
+            if (interval > 100) pauseCount++;
+            
+            lastEventTime = now;
+
+            // 记录压力
             if (e.pressure > maxPressure) maxPressure = e.pressure;
+            if (e.pressure < minPressure) minPressure = e.pressure;
             pressureSum += e.pressure;
             pressureCount++;
+            pressures.push(e.pressure);
+            timestamps.push(now);
 
+            // 记录轨迹点
+            const lastPoint = tracePoints[tracePoints.length - 1];
+            const dx = e.clientX - lastPoint.x;
+            const dy = e.clientY - lastPoint.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            pathLength += dist;
+            
+            // 计算速度
+            const velocity = dist / Math.max(interval, 1) * 1000;
+            velocities.push(velocity);
+            
+            // 计算方向变化
+            if (tracePoints.length > 1) {
+                const angle = calculateAngle(lastPoint.x, lastPoint.y, e.clientX, e.clientY);
+                angles.push(angle);
+                
+                const direction = Math.sign(dx) * 10 + Math.sign(dy);
+                if (lastDirection !== null && direction !== lastDirection && dist > 2) {
+                    directionChanges++;
+                }
+                lastDirection = direction;
+            }
+            
+            tracePoints.push({
+                x: e.clientX,
+                y: e.clientY,
+                t: now,
+                pressure: e.pressure,
+                width: e.width,
+                height: e.height
+            });
+
+            drawTrace(e.clientX, e.clientY, e.pressure);
             updateDashboard(e, '移动');
+            
+            const sampleCount = document.getElementById('sample-count');
+            if (sampleCount) sampleCount.textContent = tracePoints.length;
         });
 
-        // 3. 抬起/取消事件 (Pointer Up/Cancel)
         const endHandler = (e) => {
             if (!isTracking) return;
             isTracking = false;
 
             const endTime = performance.now();
-            const duration = Math.round(endTime - startTime); // 持续时长
+            const duration = Math.round(endTime - startTime);
             
-            // 计算总位移距离 (欧几里得距离)
+            // 计算总位移
             const deltaX = e.clientX - startX;
             const deltaY = e.clientY - startY;
-            const distance = Math.sqrt(deltaX*deltaX + deltaY*deltaY).toFixed(1);
+            const totalDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-            // 计算平均压力
-            const avgPressure = (pressureCount > 0 ? (pressureSum / pressureCount) : 0).toFixed(3);
+            // 计算各种指标
+            const avgPressure = pressureCount > 0 ? pressureSum / pressureCount : 0;
+            const pressureStd = calculateStandardDeviation(pressures);
+            const avgVelocity = velocities.length > 0 ? velocities.reduce((a, b) => a + b, 0) / velocities.length : 0;
+            const velocityStd = calculateStandardDeviation(velocities);
+            const avgInterval = intervalCount > 0 ? intervalSum / intervalCount : 0;
+            const intervalStd = calculateStandardDeviation(intervals);
+            const angleStd = calculateStandardDeviation(angles);
+            
+            // 直线度
+            const straightness = pathLength > 0 ? (totalDistance / pathLength) * 100 : 0;
+            
+            // 路径效率
+            const pathEfficiency = pathLength > 0 ? (totalDistance / pathLength) * 100 : 100;
+            
+            // 速度一致性
+            const speedConsistency = avgVelocity > 0 ? Math.max(0, 100 - (velocityStd / avgVelocity) * 100) : 0;
+            
+            // 抖动指数
+            let jitter = 0;
+            if (tracePoints.length > 2) {
+                for (let i = 2; i < tracePoints.length; i++) {
+                    const p0 = tracePoints[i-2];
+                    const p1 = tracePoints[i-1];
+                    const p2 = tracePoints[i];
+                    const expectedX = (p0.x + p2.x) / 2;
+                    const expectedY = (p0.y + p2.y) / 2;
+                    jitter += distance(p1.x, p1.y, expectedX, expectedY);
+                }
+                jitter /= (tracePoints.length - 2);
+            }
+            
+            // 曲率计算
+            const curvature = angles.length > 1 ? 
+                angles.reduce((sum, a, i) => i > 0 ? sum + Math.abs(a - angles[i-1]) : sum, 0) / angles.length : 0;
+            
+            // 熵值
+            const entropy = calculateEntropy([...velocities.map(v => v / 100), ...pressures]);
+            
+            // 贝塞尔匹配
+            const bezierMatch = detectBezierPattern(tracePoints);
+            
+            // 坐标精度
+            const hasDecimals = tracePoints.some(p => p.x % 1 !== 0 || p.y % 1 !== 0);
+            const coordPrecision = hasDecimals ? 
+                Math.max(...tracePoints.map(p => 
+                    Math.max(
+                        (p.x.toString().split('.')[1] || '').length,
+                        (p.y.toString().split('.')[1] || '').length
+                    )
+                )) : 0;
+            
+            // 平均面积
+            const avgWidth = tracePoints.reduce((s, p) => s + p.width, 0) / tracePoints.length;
+            const avgHeight = tracePoints.reduce((s, p) => s + p.height, 0) / tracePoints.length;
 
-            // 添加到日志
-            addLog(e.pointerType, duration, distance, avgPressure);
+            // 更新UI
+            document.getElementById('val-velocity').textContent = `${avgVelocity.toFixed(0)} px/s`;
+            document.getElementById('val-acceleration').textContent = velocityStd.toFixed(1);
+            document.getElementById('val-direction').textContent = directionChanges;
+            document.getElementById('val-curvature').textContent = curvature.toFixed(2);
+            document.getElementById('val-jitter').textContent = jitter.toFixed(2);
+            document.getElementById('val-straightness').textContent = `${straightness.toFixed(1)}%`;
+            
+            document.getElementById('val-duration').textContent = `${duration} ms`;
+            document.getElementById('val-interval').textContent = `${avgInterval.toFixed(1)} ms`;
+            document.getElementById('val-interval-std').textContent = intervalStd.toFixed(2);
+            document.getElementById('val-pause').textContent = pauseCount;
+            document.getElementById('val-samples').textContent = tracePoints.length;
+            document.getElementById('val-timestamp').textContent = performance.now() % 1 !== 0 ? '高精度' : '低精度';
+            
+            document.getElementById('val-pressure-min').textContent = minPressure.toFixed(3);
+            document.getElementById('val-pressure-max').textContent = maxPressure.toFixed(3);
+            document.getElementById('val-pressure-avg').textContent = avgPressure.toFixed(3);
+            document.getElementById('val-pressure-std').textContent = pressureStd.toFixed(4);
+            document.getElementById('val-pressure-change').textContent = 
+                pressures.filter((p, i) => i > 0 && Math.abs(p - pressures[i-1]) > 0.01).length;
+            document.getElementById('val-force-touch').textContent = forceTouch ? '支持' : '不支持';
+            
+            document.getElementById('val-start-coord').textContent = `${startX.toFixed(1)}, ${startY.toFixed(1)}`;
+            document.getElementById('val-end-coord').textContent = `${e.clientX.toFixed(1)}, ${e.clientY.toFixed(1)}`;
+            document.getElementById('val-distance').textContent = `${totalDistance.toFixed(1)} px`;
+            document.getElementById('val-path-length').textContent = `${pathLength.toFixed(1)} px`;
+            document.getElementById('val-efficiency').textContent = `${pathEfficiency.toFixed(1)}%`;
+            document.getElementById('val-coord-precision').textContent = `${coordPrecision} 位小数`;
+            
+            document.getElementById('val-entropy').textContent = entropy.toFixed(3);
+            document.getElementById('val-bezier').textContent = `${bezierMatch.toFixed(1)}%`;
+            document.getElementById('val-angle-std').textContent = `${angleStd.toFixed(1)}°`;
+            document.getElementById('val-speed-consistency').textContent = `${speedConsistency.toFixed(1)}%`;
+            
+            // 标记可疑指标
+            document.getElementById('card-straightness').className = 
+                straightness > 98 && totalDistance > 50 ? 'metric-card danger' : 'metric-card';
+            document.getElementById('card-efficiency').className = 
+                pathEfficiency > 99 && totalDistance > 30 ? 'metric-card danger' : 'metric-card';
+            document.getElementById('card-speed-consistency').className = 
+                speedConsistency > 95 && tracePoints.length > 10 ? 'metric-card warning' : 'metric-card';
+            document.getElementById('card-interval-std').className = 
+                intervalStd < 0.5 && tracePoints.length > 10 ? 'metric-card warning' : 'metric-card';
+            document.getElementById('card-bezier').className = 
+                bezierMatch > 90 && tracePoints.length > 20 ? 'metric-card warning' : 'metric-card';
+            document.getElementById('card-entropy').className = 
+                entropy < 1 && tracePoints.length > 10 ? 'metric-card warning' : 'metric-card';
+            document.getElementById('card-jitter').className = 
+                jitter < 0.5 && duration > 200 ? 'metric-card warning' : 'metric-card';
+            document.getElementById('card-pressure-std').className = 
+                pressureStd < 0.01 && duration > 100 ? 'metric-card danger' : 'metric-card';
+
+            // 绘制图表
+            drawVelocityChart(velocities);
+            drawPressureChart(pressures);
+
+            // 计算风险评分
+            const riskData = {
+                isTrusted: e.isTrusted,
+                avgPressure,
+                pressureStd,
+                avgWidth,
+                avgHeight,
+                distance: totalDistance,
+                straightness,
+                pathEfficiency,
+                speedConsistency,
+                intervalStd,
+                jitter,
+                bezierMatch,
+                entropy,
+                coordPrecision,
+                duration,
+                samples: tracePoints.length
+            };
+            
+            const risk = calculateRiskScore(riskData);
+            document.getElementById('risk-score').textContent = risk.score;
+            
+            const riskLevel = document.getElementById('risk-level');
+            if (risk.score >= 80) {
+                riskLevel.textContent = '低风险 - 可能是真人';
+                riskLevel.className = 'risk-level risk-low';
+            } else if (risk.score >= 50) {
+                riskLevel.textContent = '中等风险 - 需关注';
+                riskLevel.className = 'risk-level risk-medium';
+            } else {
+                riskLevel.textContent = '高风险 - 可能是机器';
+                riskLevel.className = 'risk-level risk-high';
+            }
+            
+            document.getElementById('risk-details').textContent = 
+                risk.details.length > 0 ? risk.details.join(', ') : '未发现可疑特征';
+
+            // 添加日志
+            addLog(e.pointerType, duration, totalDistance.toFixed(1), avgPressure.toFixed(3), 
+                   avgVelocity.toFixed(0), risk.score);
 
             // 恢复 UI
             pad.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            pad.innerHTML = `<div style="font-size: 2rem; margin-bottom: 10px;">👇</div><div>再次点击测试</div>`;
+            pad.querySelector('.hint').innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 10px;">👇</div>
+                <div>再次操作测试</div>
+                <div style="margin-top: 8px; font-size: 0.8rem;">上次采样: ${tracePoints.length} 点</div>
+            `;
         };
 
         pad.addEventListener('pointerup', endHandler);
         pad.addEventListener('pointercancel', endHandler);
 
-        // 更新仪表盘函数
-        function updateDashboard(e, status) {
-            // 压力显示：如果硬件不支持压力（返回0或0.5），我们标记一下
-            const p = e.pressure.toFixed(3);
-            uiPressure.innerText = p;
-            uiPressure.style.color = (p === "0.500" || p === "0.000" || p === "1.000") ? "#d63031" : "#222";
-
-            // 面积显示：宽 x 高
-            // 注意：有些浏览器 width/height 是 CSS 像素，有些是物理像素
-            const w = e.width.toFixed(1);
-            const h = e.height.toFixed(1);
-            uiArea.innerText = `${w} x ${h}`;
-
-            // 设备类型
-            uiType.innerText = e.pointerType.toUpperCase();
-
-            // isTrusted
-            uiTrusted.innerText = e.isTrusted ? "TRUE (可信)" : "FALSE (脚本)";
-            uiTrusted.style.color = e.isTrusted ? "#00b894" : "#d63031";
-        }
-
-        // 添加日志行
-        function addLog(type, duration, distance, pressure) {
+        // ==================== 添加日志 ====================
+        function addLog(type, duration, distance, pressure, velocity, riskScore) {
             const row = document.createElement('tr');
             
-            // 简单的作弊判定逻辑 (仅供参考)
-            let isSuspicious = false;
-            if (distance == 0 && duration == 100) isSuspicious = true; // 太完美的点击
-            if (pressure == 0.5 || pressure == 0) isSuspicious = true; // 无压感
-
+            let riskColor = '#00b894';
+            if (riskScore < 50) riskColor = '#d63031';
+            else if (riskScore < 80) riskColor = '#fdcb6e';
+            
             row.innerHTML = `
                 <td>${type}</td>
-                <td style="color: ${duration < 50 ? 'red' : 'inherit'}">${duration}</td>
-                <td style="color: ${distance == 0 ? 'red' : 'inherit'}">${distance}</td>
+                <td style="color: ${duration < 50 ? '#d63031' : 'inherit'}">${duration}ms</td>
+                <td style="color: ${distance == 0 ? '#d63031' : 'inherit'}">${distance}px</td>
                 <td>${pressure}</td>
+                <td>${velocity}px/s</td>
+                <td style="color: ${riskColor}; font-weight: bold;">${riskScore}</td>
             `;
             
-            // 保持只有 5 条记录
-            if (logBody.children.length >= 5) {
+            if (logBody.children.length >= 10) {
                 logBody.removeChild(logBody.lastElementChild);
             }
             logBody.insertBefore(row, logBody.firstChild);
+        }
+
+        // ==================== 折叠面板 ====================
+        function togglePanel(id) {
+            const panel = document.getElementById(id);
+            const title = panel.previousElementSibling;
+            panel.classList.toggle('collapsed');
+            title.classList.toggle('collapsed');
         }
 
     </script>
