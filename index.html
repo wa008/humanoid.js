@@ -247,18 +247,52 @@
             align-items: center;
             gap: 6px;
         }
+
+        /* 语言切换按钮 */
+        .lang-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .lang-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .lang-toggle:active {
+            transform: scale(0.98);
+        }
+
+        /* Header spacing for toggle button */
+        .header-container {
+            position: relative;
+            padding-right: 80px;
+        }
     </style>
 </head>
 <body>
 
-    <h1>🤖 交互信号分析器 v2.0</h1>
+    <!-- 语言切换按钮 -->
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLanguage()">EN</button>
+
+    <h1 data-i18n="title">🤖 交互信号分析器 v2.0</h1>
 
     <!-- 风险评分 -->
     <div class="risk-score-container">
-        <div class="risk-score-label">实时风控评分</div>
+        <div class="risk-score-label" data-i18n="riskScoreLabel">实时风控评分</div>
         <div class="risk-score" id="risk-score">--</div>
-        <div class="risk-level risk-low" id="risk-level">等待检测</div>
-        <div class="risk-details" id="risk-details">在测试区域进行操作以开始分析</div>
+        <div class="risk-level risk-low" id="risk-level" data-i18n="waitingDetection">等待检测</div>
+        <div class="risk-details" id="risk-details" data-i18n="startHint">在测试区域进行操作以开始分析</div>
     </div>
 
     <!-- 测试区域 -->
@@ -266,137 +300,137 @@
         <canvas id="trace-canvas"></canvas>
         <div class="hint">
             <div style="font-size: 2rem; margin-bottom: 10px;">👇</div>
-            <div>在此区域 点击、长按 或 滑动</div>
-            <div style="margin-top: 8px; font-size: 0.8rem;">(支持多指触控与压感，滑动轨迹可视化)</div>
+            <div data-i18n="testPadHint">在此区域 点击、长按 或 滑动</div>
+            <div style="margin-top: 8px; font-size: 0.8rem;" data-i18n="testPadSubHint">(支持多指触控与压感，滑动轨迹可视化)</div>
         </div>
     </div>
 
     <!-- 环境检测 -->
-    <div class="section-title">🔍 环境风险检测</div>
+    <div class="section-title" data-i18n="envRiskDetection">🔍 环境风险检测</div>
     <div class="env-warnings" id="env-warnings">
         <div class="env-warning-item">正在检测...</div>
     </div>
 
     <!-- 基础指标 -->
-    <div class="section-title collapsible" onclick="togglePanel('basic-panel')">📊 基础交互指标</div>
+    <div class="section-title collapsible" onclick="togglePanel('basic-panel')" data-i18n="basicMetrics">📊 基础交互指标</div>
     <div class="panel-content" id="basic-panel">
         <div class="dashboard">
             <div class="metric-card" id="card-pressure">
-                <span class="metric-label">压力值 (Pressure)</span>
+                <span class="metric-label" data-i18n="pressure">压力值 (Pressure)</span>
                 <div class="metric-value" id="val-pressure">0.000</div>
-                <div class="metric-sub">正常: 0.2~0.8 波动</div>
+                <div class="metric-sub" data-i18n="pressureNormal">正常: 0.2~0.8 波动</div>
             </div>
             <div class="metric-card" id="card-area">
-                <span class="metric-label">接触面积 (WxH)</span>
+                <span class="metric-label" data-i18n="contactArea">接触面积 (WxH)</span>
                 <div class="metric-value" id="val-area">0 x 0</div>
-                <div class="metric-sub">正常: 10~50 px</div>
+                <div class="metric-sub" data-i18n="areaNormal">正常: 10~50 px</div>
             </div>
             <div class="metric-card" id="card-type">
-                <span class="metric-label">设备类型 (PointerType)</span>
+                <span class="metric-label" data-i18n="pointerType">设备类型 (PointerType)</span>
                 <div class="metric-value" id="val-type">-</div>
             </div>
             <div class="metric-card" id="card-trusted">
-                <span class="metric-label">事件可信度 (isTrusted)</span>
+                <span class="metric-label" data-i18n="isTrusted">事件可信度 (isTrusted)</span>
                 <div class="metric-value" id="val-trusted">-</div>
             </div>
         </div>
     </div>
 
     <!-- 滑动轨迹分析 -->
-    <div class="section-title collapsible" onclick="togglePanel('swipe-panel')">📈 滑动轨迹分析</div>
+    <div class="section-title collapsible" onclick="togglePanel('swipe-panel')" data-i18n="swipeAnalysis">📈 滑动轨迹分析</div>
     <div class="panel-content" id="swipe-panel">
         <div class="dashboard dashboard-3col">
             <div class="metric-card" id="card-velocity">
-                <span class="metric-label">平均速度</span>
+                <span class="metric-label" data-i18n="avgVelocity">平均速度</span>
                 <div class="metric-value" id="val-velocity">0 px/s</div>
             </div>
             <div class="metric-card" id="card-acceleration">
-                <span class="metric-label">加速度变化</span>
+                <span class="metric-label" data-i18n="accelerationChange">加速度变化</span>
                 <div class="metric-value" id="val-acceleration">0</div>
             </div>
             <div class="metric-card" id="card-direction">
-                <span class="metric-label">方向变化次数</span>
+                <span class="metric-label" data-i18n="directionChanges">方向变化次数</span>
                 <div class="metric-value" id="val-direction">0</div>
             </div>
             <div class="metric-card" id="card-curvature">
-                <span class="metric-label">轨迹曲率</span>
+                <span class="metric-label" data-i18n="curvature">轨迹曲率</span>
                 <div class="metric-value" id="val-curvature">0</div>
-                <div class="metric-sub">真人轨迹有自然弯曲</div>
+                <div class="metric-sub" data-i18n="curvatureHint">真人轨迹有自然弯曲</div>
             </div>
             <div class="metric-card" id="card-jitter">
-                <span class="metric-label">抖动指数</span>
+                <span class="metric-label" data-i18n="jitter">抖动指数</span>
                 <div class="metric-value" id="val-jitter">0</div>
-                <div class="metric-sub">真人有微小抖动</div>
+                <div class="metric-sub" data-i18n="jitterHint">真人有微小抖动</div>
             </div>
             <div class="metric-card" id="card-straightness">
-                <span class="metric-label">直线度</span>
+                <span class="metric-label" data-i18n="straightness">直线度</span>
                 <div class="metric-value" id="val-straightness">0%</div>
-                <div class="metric-sub">机器往往100%</div>
+                <div class="metric-sub" data-i18n="straightnessHint">机器往往100%</div>
             </div>
         </div>
         <!-- 速度曲线图 -->
         <div class="chart-container">
-            <div class="chart-label">速度变化曲线</div>
+            <div class="chart-label" data-i18n="velocityCurve">速度变化曲线</div>
             <canvas id="velocity-chart" class="mini-chart" height="60"></canvas>
         </div>
     </div>
 
     <!-- 时间特征分析 -->
-    <div class="section-title collapsible" onclick="togglePanel('time-panel')">⏱️ 时间特征分析</div>
+    <div class="section-title collapsible" onclick="togglePanel('time-panel')" data-i18n="timeAnalysis">⏱️ 时间特征分析</div>
     <div class="panel-content" id="time-panel">
         <div class="dashboard dashboard-3col">
             <div class="metric-card" id="card-duration">
-                <span class="metric-label">操作时长</span>
+                <span class="metric-label" data-i18n="duration">操作时长</span>
                 <div class="metric-value" id="val-duration">0 ms</div>
             </div>
             <div class="metric-card" id="card-interval">
-                <span class="metric-label">采样间隔</span>
+                <span class="metric-label" data-i18n="sampleInterval">采样间隔</span>
                 <div class="metric-value" id="val-interval">0 ms</div>
-                <div class="metric-sub">正常: 8~16ms</div>
+                <div class="metric-sub" data-i18n="intervalNormal">正常: 8~16ms</div>
             </div>
             <div class="metric-card" id="card-interval-std">
-                <span class="metric-label">间隔标准差</span>
+                <span class="metric-label" data-i18n="intervalStd">间隔标准差</span>
                 <div class="metric-value" id="val-interval-std">0</div>
-                <div class="metric-sub">太均匀可疑</div>
+                <div class="metric-sub" data-i18n="tooUniformSuspicious">太均匀可疑</div>
             </div>
             <div class="metric-card" id="card-pause">
-                <span class="metric-label">停顿次数</span>
+                <span class="metric-label" data-i18n="pauseCount">停顿次数</span>
                 <div class="metric-value" id="val-pause">0</div>
             </div>
             <div class="metric-card" id="card-samples">
-                <span class="metric-label">采样点数</span>
+                <span class="metric-label" data-i18n="sampleCount">采样点数</span>
                 <div class="metric-value" id="val-samples">0</div>
             </div>
             <div class="metric-card" id="card-timestamp">
-                <span class="metric-label">时间戳精度</span>
+                <span class="metric-label" data-i18n="timestampPrecision">时间戳精度</span>
                 <div class="metric-value" id="val-timestamp">-</div>
             </div>
         </div>
     </div>
 
     <!-- 压力特征分析 -->
-    <div class="section-title collapsible" onclick="togglePanel('pressure-panel')">💪 压力特征分析</div>
+    <div class="section-title collapsible" onclick="togglePanel('pressure-panel')" data-i18n="pressureAnalysis">💪 压力特征分析</div>
     <div class="panel-content" id="pressure-panel">
         <div class="dashboard dashboard-3col">
             <div class="metric-card" id="card-pressure-min">
-                <span class="metric-label">最小压力</span>
+                <span class="metric-label" data-i18n="minPressure">最小压力</span>
                 <div class="metric-value" id="val-pressure-min">0</div>
             </div>
             <div class="metric-card" id="card-pressure-max">
-                <span class="metric-label">最大压力</span>
+                <span class="metric-label" data-i18n="maxPressure">最大压力</span>
                 <div class="metric-value" id="val-pressure-max">0</div>
             </div>
             <div class="metric-card" id="card-pressure-avg">
-                <span class="metric-label">平均压力</span>
+                <span class="metric-label" data-i18n="avgPressure">平均压力</span>
                 <div class="metric-value" id="val-pressure-avg">0</div>
             </div>
             <div class="metric-card" id="card-pressure-std">
-                <span class="metric-label">压力标准差</span>
+                <span class="metric-label" data-i18n="pressureStd">压力标准差</span>
                 <div class="metric-value" id="val-pressure-std">0</div>
-                <div class="metric-sub">无变化可疑</div>
+                <div class="metric-sub" data-i18n="noChangeSuspicious">无变化可疑</div>
             </div>
             <div class="metric-card" id="card-pressure-change">
-                <span class="metric-label">压力变化次数</span>
+                <span class="metric-label" data-i18n="pressureChangeCount">压力变化次数</span>
                 <div class="metric-value" id="val-pressure-change">0</div>
             </div>
             <div class="metric-card" id="card-force-touch">
@@ -406,101 +440,101 @@
         </div>
         <!-- 压力曲线图 -->
         <div class="chart-container">
-            <div class="chart-label">压力变化曲线</div>
+            <div class="chart-label" data-i18n="pressureCurve">压力变化曲线</div>
             <canvas id="pressure-chart" class="mini-chart" height="60"></canvas>
         </div>
     </div>
 
     <!-- 坐标特征分析 -->
-    <div class="section-title collapsible" onclick="togglePanel('coord-panel')">📍 坐标特征分析</div>
+    <div class="section-title collapsible" onclick="togglePanel('coord-panel')" data-i18n="coordAnalysis">📍 坐标特征分析</div>
     <div class="panel-content" id="coord-panel">
         <div class="dashboard dashboard-3col">
             <div class="metric-card">
-                <span class="metric-label">起始坐标</span>
+                <span class="metric-label" data-i18n="startCoord">起始坐标</span>
                 <div class="metric-value" id="val-start-coord">-</div>
             </div>
             <div class="metric-card">
-                <span class="metric-label">结束坐标</span>
+                <span class="metric-label" data-i18n="endCoord">结束坐标</span>
                 <div class="metric-value" id="val-end-coord">-</div>
             </div>
             <div class="metric-card">
-                <span class="metric-label">总位移</span>
+                <span class="metric-label" data-i18n="totalDisplacement">总位移</span>
                 <div class="metric-value" id="val-distance">0 px</div>
             </div>
             <div class="metric-card">
-                <span class="metric-label">实际路径长度</span>
+                <span class="metric-label" data-i18n="actualPathLength">实际路径长度</span>
                 <div class="metric-value" id="val-path-length">0 px</div>
             </div>
             <div class="metric-card" id="card-efficiency">
-                <span class="metric-label">路径效率</span>
+                <span class="metric-label" data-i18n="pathEfficiency">路径效率</span>
                 <div class="metric-value" id="val-efficiency">0%</div>
-                <div class="metric-sub">机器接近100%</div>
+                <div class="metric-sub" data-i18n="machineNear100">机器接近100%</div>
             </div>
             <div class="metric-card">
-                <span class="metric-label">坐标小数精度</span>
+                <span class="metric-label" data-i18n="coordPrecision">坐标小数精度</span>
                 <div class="metric-value" id="val-coord-precision">-</div>
             </div>
         </div>
     </div>
 
     <!-- 高级指标 -->
-    <div class="section-title collapsible" onclick="togglePanel('advanced-panel')">🧪 高级风控指标</div>
+    <div class="section-title collapsible" onclick="togglePanel('advanced-panel')" data-i18n="advancedMetrics">🧪 高级风控指标</div>
     <div class="panel-content" id="advanced-panel">
         <div class="dashboard">
             <div class="metric-card" id="card-entropy">
-                <span class="metric-label">轨迹熵值</span>
+                <span class="metric-label" data-i18n="trajectoryEntropy">轨迹熵值</span>
                 <div class="metric-value" id="val-entropy">0</div>
-                <div class="metric-sub">越高越随机/真实</div>
+                <div class="metric-sub" data-i18n="higherMoreRandom">越高越随机/真实</div>
             </div>
             <div class="metric-card" id="card-bezier">
-                <span class="metric-label">贝塞尔匹配度</span>
+                <span class="metric-label" data-i18n="bezierMatch">贝塞尔匹配度</span>
                 <div class="metric-value" id="val-bezier">0%</div>
-                <div class="metric-sub">机器轨迹匹配度高</div>
+                <div class="metric-sub" data-i18n="machineHighMatch">机器轨迹匹配度高</div>
             </div>
             <div class="metric-card" id="card-angle-std">
-                <span class="metric-label">角度变化标准差</span>
+                <span class="metric-label" data-i18n="angleStd">角度变化标准差</span>
                 <div class="metric-value" id="val-angle-std">0°</div>
             </div>
             <div class="metric-card" id="card-speed-consistency">
-                <span class="metric-label">速度一致性</span>
+                <span class="metric-label" data-i18n="speedConsistency">速度一致性</span>
                 <div class="metric-value" id="val-speed-consistency">0%</div>
-                <div class="metric-sub">太一致可疑</div>
+                <div class="metric-sub" data-i18n="tooConsistentSuspicious">太一致可疑</div>
             </div>
         </div>
     </div>
 
     <!-- 设备指纹 -->
-    <div class="section-title collapsible" onclick="togglePanel('fingerprint-panel')">🔐 设备指纹</div>
+    <div class="section-title collapsible" onclick="togglePanel('fingerprint-panel')" data-i18n="deviceFingerprint">🔐 设备指纹</div>
     <div class="panel-content" id="fingerprint-panel">
         <div class="fingerprint-section" id="device-fingerprint">
             <div class="fp-row"><span class="fp-label">User Agent</span><span class="fp-value" id="fp-ua">-</span></div>
-            <div class="fp-row"><span class="fp-label">平台</span><span class="fp-value" id="fp-platform">-</span></div>
-            <div class="fp-row"><span class="fp-label">屏幕分辨率</span><span class="fp-value" id="fp-screen">-</span></div>
-            <div class="fp-row"><span class="fp-label">设备像素比</span><span class="fp-value" id="fp-dpr">-</span></div>
-            <div class="fp-row"><span class="fp-label">触控点数</span><span class="fp-value" id="fp-touch">-</span></div>
-            <div class="fp-row"><span class="fp-label">语言</span><span class="fp-value" id="fp-lang">-</span></div>
-            <div class="fp-row"><span class="fp-label">时区</span><span class="fp-value" id="fp-tz">-</span></div>
-            <div class="fp-row"><span class="fp-label">WebGL渲染器</span><span class="fp-value" id="fp-webgl">-</span></div>
-            <div class="fp-row"><span class="fp-label">Canvas指纹</span><span class="fp-value" id="fp-canvas">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="platform">平台</span><span class="fp-value" id="fp-platform">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="screenResolution">屏幕分辨率</span><span class="fp-value" id="fp-screen">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="devicePixelRatio">设备像素比</span><span class="fp-value" id="fp-dpr">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="touchPoints">触控点数</span><span class="fp-value" id="fp-touch">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="language">语言</span><span class="fp-value" id="fp-lang">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="timezone">时区</span><span class="fp-value" id="fp-tz">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="webglRenderer">WebGL渲染器</span><span class="fp-value" id="fp-webgl">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="canvasFingerprint">Canvas指纹</span><span class="fp-value" id="fp-canvas">-</span></div>
             <div class="fp-row"><span class="fp-label">AudioContext</span><span class="fp-value" id="fp-audio">-</span></div>
-            <div class="fp-row"><span class="fp-label">硬件并发数</span><span class="fp-value" id="fp-cores">-</span></div>
-            <div class="fp-row"><span class="fp-label">内存大小</span><span class="fp-value" id="fp-memory">-</span></div>
-            <div class="fp-row"><span class="fp-label">连接类型</span><span class="fp-value" id="fp-connection">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="hardwareConcurrency">硬件并发数</span><span class="fp-value" id="fp-cores">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="memorySize">内存大小</span><span class="fp-value" id="fp-memory">-</span></div>
+            <div class="fp-row"><span class="fp-label" data-i18n="connectionType">连接类型</span><span class="fp-value" id="fp-connection">-</span></div>
         </div>
     </div>
 
     <!-- 历史记录 -->
-    <h3>📜 历史记录 (最近 10 次操作)</h3>
+    <h3 data-i18n="historyTitle">📜 历史记录 (最近 10 次操作)</h3>
     <div class="log-container">
         <table>
             <thead>
                 <tr>
-                    <th>类型</th>
-                    <th>时长</th>
-                    <th>位移</th>
-                    <th>压力</th>
-                    <th>速度</th>
-                    <th>风险</th>
+                    <th data-i18n="thType">类型</th>
+                    <th data-i18n="thDuration">时长</th>
+                    <th data-i18n="thDisplacement">位移</th>
+                    <th data-i18n="thPressure">压力</th>
+                    <th data-i18n="thVelocity">速度</th>
+                    <th data-i18n="thRisk">风险</th>
                 </tr>
             </thead>
             <tbody id="log-body">
@@ -509,19 +543,376 @@
     </div>
 
     <div class="tips">
-        <strong>🎯 风控指标说明</strong>
-        <ul>
-            <li><b>压力:</b> 真人通常在 0.2~0.8 之间波动；脚本常为 0, 0.5 或 1.0 固定值</li>
-            <li><b>面积:</b> 真人手指通常 10~50px；脚本常为 0x0 或 1x1</li>
-            <li><b>位移:</b> 即使是点击，真人也会有微小像素抖动；脚本往往 0px 完美静止</li>
-            <li><b>轨迹曲率:</b> 真人滑动有自然弧度；机器通常走直线</li>
-            <li><b>速度一致性:</b> 真人速度有自然波动；机器速度往往恒定</li>
-            <li><b>采样间隔标准差:</b> 真人触控事件间隔略有波动；机器往往非常均匀</li>
-            <li><b>路径效率:</b> 真人滑动效率约70-90%；机器接近100%</li>
+        <strong data-i18n="tipsTitle">🎯 风控指标说明</strong>
+        <ul id="tips-list">
+            <li data-i18n="tipPressure"><b>压力:</b> 真人通常在 0.2~0.8 之间波动；脚本常为 0, 0.5 或 1.0 固定值</li>
+            <li data-i18n="tipArea"><b>面积:</b> 真人手指通常 10~50px；脚本常为 0x0 或 1x1</li>
+            <li data-i18n="tipDisplacement"><b>位移:</b> 即使是点击，真人也会有微小像素抖动；脚本往往 0px 完美静止</li>
+            <li data-i18n="tipCurvature"><b>轨迹曲率:</b> 真人滑动有自然弧度；机器通常走直线</li>
+            <li data-i18n="tipSpeedConsistency"><b>速度一致性:</b> 真人速度有自然波动；机器速度往往恒定</li>
+            <li data-i18n="tipIntervalStd"><b>采样间隔标准差:</b> 真人触控事件间隔略有波动；机器往往非常均匀</li>
+            <li data-i18n="tipPathEfficiency"><b>路径效率:</b> 真人滑动效率约70-90%；机器接近100%</li>
         </ul>
     </div>
 
     <script>
+        // ==================== 国际化 (i18n) ====================
+        let currentLang = 'zh';
+        
+        const translations = {
+            zh: {
+                // 标题和按钮
+                title: '🤖 交互信号分析器 v2.0',
+                langToggle: 'EN',
+                
+                // 风险评分
+                riskScoreLabel: '实时风控评分',
+                waitingDetection: '等待检测',
+                startHint: '在测试区域进行操作以开始分析',
+                riskLow: '低风险 - 可能是真人',
+                riskMedium: '中等风险 - 需关注',
+                riskHigh: '高风险 - 可能是机器',
+                noSuspiciousFeatures: '未发现可疑特征',
+                
+                // 测试区域
+                testPadHint: '在此区域 点击、长按 或 滑动',
+                testPadSubHint: '(支持多指触控与压感，滑动轨迹可视化)',
+                detecting: '检测中...',
+                sampling: '采样',
+                testAgain: '再次操作测试',
+                lastSampling: '上次采样',
+                points: '点',
+                
+                // 环境检测
+                envRiskDetection: '🔍 环境风险检测',
+                envDetecting: '正在检测...',
+                envClean: '✅ 未检测到明显的自动化环境风险',
+                envWebdriver: '⚠️ 检测到 WebDriver (自动化工具)',
+                envPhantom: '⚠️ 检测到 PhantomJS',
+                envSelenium: '⚠️ 检测到 Selenium 特征',
+                envHeadless: '⚠️ 检测到 Headless Chrome',
+                envChromeObj: '⚠️ Chrome 对象缺失',
+                envTouchMismatch: '⚠️ 移动设备UA但无触控能力',
+                envNoPlugins: '⚠️ 浏览器插件列表为空',
+                envNoLangs: '⚠️ 语言列表为空',
+                envDevTools: 'ℹ️ 开发者工具可能已打开',
+                envSmallScreen: '⚠️ 屏幕尺寸异常小',
+                
+                // 基础指标
+                basicMetrics: '📊 基础交互指标',
+                pressure: '压力值 (Pressure)',
+                pressureNormal: '正常: 0.2~0.8 波动',
+                contactArea: '接触面积 (WxH)',
+                areaNormal: '正常: 10~50 px',
+                pointerType: '设备类型 (PointerType)',
+                isTrusted: '事件可信度 (isTrusted)',
+                trustedTrue: 'TRUE ✓',
+                trustedFalse: 'FALSE ✗',
+                
+                // 滑动分析
+                swipeAnalysis: '📈 滑动轨迹分析',
+                avgVelocity: '平均速度',
+                accelerationChange: '加速度变化',
+                directionChanges: '方向变化次数',
+                curvature: '轨迹曲率',
+                curvatureHint: '真人轨迹有自然弯曲',
+                jitter: '抖动指数',
+                jitterHint: '真人有微小抖动',
+                straightness: '直线度',
+                straightnessHint: '机器往往100%',
+                velocityCurve: '速度变化曲线',
+                
+                // 时间分析
+                timeAnalysis: '⏱️ 时间特征分析',
+                duration: '操作时长',
+                sampleInterval: '采样间隔',
+                intervalNormal: '正常: 8~16ms',
+                intervalStd: '间隔标准差',
+                tooUniformSuspicious: '太均匀可疑',
+                pauseCount: '停顿次数',
+                sampleCount: '采样点数',
+                timestampPrecision: '时间戳精度',
+                highPrecision: '高精度',
+                lowPrecision: '低精度',
+                
+                // 压力分析
+                pressureAnalysis: '💪 压力特征分析',
+                minPressure: '最小压力',
+                maxPressure: '最大压力',
+                avgPressure: '平均压力',
+                pressureStd: '压力标准差',
+                noChangeSuspicious: '无变化可疑',
+                pressureChangeCount: '压力变化次数',
+                supported: '支持',
+                notSupported: '不支持',
+                pressureCurve: '压力变化曲线',
+                
+                // 坐标分析
+                coordAnalysis: '📍 坐标特征分析',
+                startCoord: '起始坐标',
+                endCoord: '结束坐标',
+                totalDisplacement: '总位移',
+                actualPathLength: '实际路径长度',
+                pathEfficiency: '路径效率',
+                machineNear100: '机器接近100%',
+                coordPrecision: '坐标小数精度',
+                decimals: '位小数',
+                
+                // 高级指标
+                advancedMetrics: '🧪 高级风控指标',
+                trajectoryEntropy: '轨迹熵值',
+                higherMoreRandom: '越高越随机/真实',
+                bezierMatch: '贝塞尔匹配度',
+                machineHighMatch: '机器轨迹匹配度高',
+                angleStd: '角度变化标准差',
+                speedConsistency: '速度一致性',
+                tooConsistentSuspicious: '太一致可疑',
+                
+                // 设备指纹
+                deviceFingerprint: '🔐 设备指纹',
+                platform: '平台',
+                screenResolution: '屏幕分辨率',
+                devicePixelRatio: '设备像素比',
+                touchPoints: '触控点数',
+                language: '语言',
+                timezone: '时区',
+                webglRenderer: 'WebGL渲染器',
+                canvasFingerprint: 'Canvas指纹',
+                hardwareConcurrency: '硬件并发数',
+                memorySize: '内存大小',
+                connectionType: '连接类型',
+                notSupportedShort: '不支持',
+                
+                // 历史记录
+                historyTitle: '📜 历史记录 (最近 10 次操作)',
+                thType: '类型',
+                thDuration: '时长',
+                thDisplacement: '位移',
+                thPressure: '压力',
+                thVelocity: '速度',
+                thRisk: '风险',
+                
+                // 提示
+                tipsTitle: '🎯 风控指标说明',
+                tipPressure: '<b>压力:</b> 真人通常在 0.2~0.8 之间波动；脚本常为 0, 0.5 或 1.0 固定值',
+                tipArea: '<b>面积:</b> 真人手指通常 10~50px；脚本常为 0x0 或 1x1',
+                tipDisplacement: '<b>位移:</b> 即使是点击，真人也会有微小像素抖动；脚本往往 0px 完美静止',
+                tipCurvature: '<b>轨迹曲率:</b> 真人滑动有自然弧度；机器通常走直线',
+                tipSpeedConsistency: '<b>速度一致性:</b> 真人速度有自然波动；机器速度往往恒定',
+                tipIntervalStd: '<b>采样间隔标准差:</b> 真人触控事件间隔略有波动；机器往往非常均匀',
+                tipPathEfficiency: '<b>路径效率:</b> 真人滑动效率约70-90%；机器接近100%',
+                
+                // 风险评分详情
+                riskUntrusted: '事件不可信(-40)',
+                riskPressureFixed: '压力异常固定(-15)',
+                riskPressureNoChange: '压力无变化(-10)',
+                riskAreaZero: '接触面积为0(-10)',
+                riskNoDisplacement: '完全无位移(-5)',
+                riskTooStraight: '轨迹过于笔直(-10)',
+                riskHighEfficiency: '路径效率过高(-8)',
+                riskSpeedConsistent: '速度过于一致(-8)',
+                riskUniformInterval: '采样间隔过于均匀(-8)',
+                riskNoJitter: '无自然抖动(-5)',
+                riskBezier: '疑似贝塞尔曲线(-8)',
+                riskLowEntropy: '轨迹熵值过低(-5)',
+                riskNoDecimal: '坐标无小数精度(-5)'
+            },
+            en: {
+                // Title and button
+                title: '🤖 Interaction Signal Analyzer v2.0',
+                langToggle: '中文',
+                
+                // Risk score
+                riskScoreLabel: 'Real-time Risk Score',
+                waitingDetection: 'Waiting for Detection',
+                startHint: 'Interact in the test area to start analysis',
+                riskLow: 'Low Risk - Likely Human',
+                riskMedium: 'Medium Risk - Needs Attention',
+                riskHigh: 'High Risk - Likely Bot',
+                noSuspiciousFeatures: 'No suspicious features detected',
+                
+                // Test area
+                testPadHint: 'Click, Long Press or Swipe here',
+                testPadSubHint: '(Supports multi-touch & pressure, trajectory visualization)',
+                detecting: 'Detecting...',
+                sampling: 'Sampling',
+                testAgain: 'Test Again',
+                lastSampling: 'Last sampling',
+                points: 'points',
+                
+                // Environment detection
+                envRiskDetection: '🔍 Environment Risk Detection',
+                envDetecting: 'Detecting...',
+                envClean: '✅ No obvious automation environment risks detected',
+                envWebdriver: '⚠️ WebDriver detected (automation tool)',
+                envPhantom: '⚠️ PhantomJS detected',
+                envSelenium: '⚠️ Selenium signature detected',
+                envHeadless: '⚠️ Headless Chrome detected',
+                envChromeObj: '⚠️ Chrome object missing',
+                envTouchMismatch: '⚠️ Mobile UA but no touch capability',
+                envNoPlugins: '⚠️ Browser plugin list empty',
+                envNoLangs: '⚠️ Language list empty',
+                envDevTools: 'ℹ️ DevTools may be open',
+                envSmallScreen: '⚠️ Abnormally small screen size',
+                
+                // Basic metrics
+                basicMetrics: '📊 Basic Interaction Metrics',
+                pressure: 'Pressure',
+                pressureNormal: 'Normal: 0.2~0.8 fluctuation',
+                contactArea: 'Contact Area (WxH)',
+                areaNormal: 'Normal: 10~50 px',
+                pointerType: 'Pointer Type',
+                isTrusted: 'Event Trusted (isTrusted)',
+                trustedTrue: 'TRUE ✓',
+                trustedFalse: 'FALSE ✗',
+                
+                // Swipe analysis
+                swipeAnalysis: '📈 Swipe Trajectory Analysis',
+                avgVelocity: 'Avg Velocity',
+                accelerationChange: 'Acceleration Δ',
+                directionChanges: 'Direction Changes',
+                curvature: 'Curvature',
+                curvatureHint: 'Human has natural curves',
+                jitter: 'Jitter Index',
+                jitterHint: 'Human has micro-jitter',
+                straightness: 'Straightness',
+                straightnessHint: 'Bot often 100%',
+                velocityCurve: 'Velocity Curve',
+                
+                // Time analysis
+                timeAnalysis: '⏱️ Time Feature Analysis',
+                duration: 'Duration',
+                sampleInterval: 'Sample Interval',
+                intervalNormal: 'Normal: 8~16ms',
+                intervalStd: 'Interval Std Dev',
+                tooUniformSuspicious: 'Too uniform = suspicious',
+                pauseCount: 'Pause Count',
+                sampleCount: 'Sample Count',
+                timestampPrecision: 'Timestamp Precision',
+                highPrecision: 'High Precision',
+                lowPrecision: 'Low Precision',
+                
+                // Pressure analysis
+                pressureAnalysis: '💪 Pressure Feature Analysis',
+                minPressure: 'Min Pressure',
+                maxPressure: 'Max Pressure',
+                avgPressure: 'Avg Pressure',
+                pressureStd: 'Pressure Std Dev',
+                noChangeSuspicious: 'No change = suspicious',
+                pressureChangeCount: 'Pressure Changes',
+                supported: 'Supported',
+                notSupported: 'Not Supported',
+                pressureCurve: 'Pressure Curve',
+                
+                // Coordinate analysis
+                coordAnalysis: '📍 Coordinate Feature Analysis',
+                startCoord: 'Start Coord',
+                endCoord: 'End Coord',
+                totalDisplacement: 'Displacement',
+                actualPathLength: 'Actual Path Length',
+                pathEfficiency: 'Path Efficiency',
+                machineNear100: 'Bot near 100%',
+                coordPrecision: 'Coord Decimal Precision',
+                decimals: 'decimals',
+                
+                // Advanced metrics
+                advancedMetrics: '🧪 Advanced Risk Metrics',
+                trajectoryEntropy: 'Trajectory Entropy',
+                higherMoreRandom: 'Higher = more random/real',
+                bezierMatch: 'Bezier Match',
+                machineHighMatch: 'Bot has high match',
+                angleStd: 'Angle Std Dev',
+                speedConsistency: 'Speed Consistency',
+                tooConsistentSuspicious: 'Too consistent = suspicious',
+                
+                // Device fingerprint
+                deviceFingerprint: '🔐 Device Fingerprint',
+                platform: 'Platform',
+                screenResolution: 'Screen Resolution',
+                devicePixelRatio: 'Device Pixel Ratio',
+                touchPoints: 'Touch Points',
+                language: 'Language',
+                timezone: 'Timezone',
+                webglRenderer: 'WebGL Renderer',
+                canvasFingerprint: 'Canvas Fingerprint',
+                hardwareConcurrency: 'Hardware Concurrency',
+                memorySize: 'Memory Size',
+                connectionType: 'Connection Type',
+                notSupportedShort: 'N/A',
+                
+                // History
+                historyTitle: '📜 History (Last 10 Operations)',
+                thType: 'Type',
+                thDuration: 'Duration',
+                thDisplacement: 'Displacement',
+                thPressure: 'Pressure',
+                thVelocity: 'Velocity',
+                thRisk: 'Risk',
+                
+                // Tips
+                tipsTitle: '🎯 Risk Indicator Guide',
+                tipPressure: '<b>Pressure:</b> Human usually 0.2~0.8 with fluctuation; Bot often fixed at 0, 0.5, or 1.0',
+                tipArea: '<b>Area:</b> Human finger typically 10~50px; Bot often 0x0 or 1x1',
+                tipDisplacement: '<b>Displacement:</b> Even clicking, humans have micro-jitter; Bot often perfect 0px',
+                tipCurvature: '<b>Curvature:</b> Human swipes have natural curves; Bot usually straight',
+                tipSpeedConsistency: '<b>Speed Consistency:</b> Human speed fluctuates naturally; Bot often constant',
+                tipIntervalStd: '<b>Interval Std Dev:</b> Human touch events have slight variation; Bot often very uniform',
+                tipPathEfficiency: '<b>Path Efficiency:</b> Human swipe ~70-90%; Bot near 100%',
+                
+                // Risk score details
+                riskUntrusted: 'Untrusted event(-40)',
+                riskPressureFixed: 'Fixed pressure(-15)',
+                riskPressureNoChange: 'No pressure change(-10)',
+                riskAreaZero: 'Zero contact area(-10)',
+                riskNoDisplacement: 'No displacement(-5)',
+                riskTooStraight: 'Too straight(-10)',
+                riskHighEfficiency: 'Too efficient(-8)',
+                riskSpeedConsistent: 'Too consistent speed(-8)',
+                riskUniformInterval: 'Too uniform interval(-8)',
+                riskNoJitter: 'No natural jitter(-5)',
+                riskBezier: 'Bezier-like curve(-8)',
+                riskLowEntropy: 'Low entropy(-5)',
+                riskNoDecimal: 'No decimal precision(-5)'
+            }
+        };
+        
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+        
+        function updateLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    if (el.tagName === 'LI' || el.innerHTML.includes('<b>')) {
+                        el.innerHTML = translations[currentLang][key];
+                    } else {
+                        el.textContent = translations[currentLang][key];
+                    }
+                }
+            });
+            
+            // Update toggle button
+            document.getElementById('lang-toggle').textContent = t('langToggle');
+            
+            // Update page title
+            document.title = currentLang === 'zh' ? '信号指纹采集测试' : 'Signal Fingerprint Test';
+            
+            // Re-run environment detection to update messages
+            detectEnvironmentRisks();
+        }
+        
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('preferredLang', currentLang);
+            updateLanguage();
+        }
+        
+        // Initialize language from localStorage
+        if (localStorage.getItem('preferredLang')) {
+            currentLang = localStorage.getItem('preferredLang');
+        }
+
         // ==================== 全局变量 ====================
         const pad = document.getElementById('test-pad');
         const logBody = document.getElementById('log-body');
@@ -627,44 +1018,44 @@
             
             // 检测 Webdriver
             if (navigator.webdriver) {
-                warnings.push({ level: 'high', msg: '⚠️ 检测到 WebDriver (自动化工具)' });
+                warnings.push({ level: 'high', key: 'envWebdriver' });
             }
             
             // 检测 Phantom
             if (window._phantom || window.callPhantom) {
-                warnings.push({ level: 'high', msg: '⚠️ 检测到 PhantomJS' });
+                warnings.push({ level: 'high', key: 'envPhantom' });
             }
             
             // 检测 Selenium
             if (window.document.documentElement.getAttribute('selenium') || 
                 window.document.documentElement.getAttribute('webdriver') ||
                 window.document.documentElement.getAttribute('driver')) {
-                warnings.push({ level: 'high', msg: '⚠️ 检测到 Selenium 特征' });
+                warnings.push({ level: 'high', key: 'envSelenium' });
             }
             
             // 检测 HeadlessChrome
             if (/HeadlessChrome/.test(navigator.userAgent)) {
-                warnings.push({ level: 'high', msg: '⚠️ 检测到 Headless Chrome' });
+                warnings.push({ level: 'high', key: 'envHeadless' });
             }
             
             // 检测缺失的浏览器特征
             if (!window.chrome && /Chrome/.test(navigator.userAgent)) {
-                warnings.push({ level: 'medium', msg: '⚠️ Chrome 对象缺失' });
+                warnings.push({ level: 'medium', key: 'envChromeObj' });
             }
             
             // 检测触控能力不匹配
             if (navigator.maxTouchPoints === 0 && /Mobile|Android|iPhone/.test(navigator.userAgent)) {
-                warnings.push({ level: 'medium', msg: '⚠️ 移动设备UA但无触控能力' });
+                warnings.push({ level: 'medium', key: 'envTouchMismatch' });
             }
             
             // 检测 plugins 异常
             if (navigator.plugins.length === 0 && !/Mobile|Android|iPhone/.test(navigator.userAgent)) {
-                warnings.push({ level: 'low', msg: '⚠️ 浏览器插件列表为空' });
+                warnings.push({ level: 'low', key: 'envNoPlugins' });
             }
             
             // 检测语言不匹配
             if (navigator.languages && navigator.languages.length === 0) {
-                warnings.push({ level: 'low', msg: '⚠️ 语言列表为空' });
+                warnings.push({ level: 'low', key: 'envNoLangs' });
             }
             
             // 检测 Permission 异常
@@ -680,23 +1071,23 @@
             const devToolsOpen = window.outerWidth - window.innerWidth > 160 || 
                                  window.outerHeight - window.innerHeight > 160;
             if (devToolsOpen) {
-                warnings.push({ level: 'low', msg: 'ℹ️ 开发者工具可能已打开' });
+                warnings.push({ level: 'low', key: 'envDevTools' });
             }
             
             // 检测屏幕尺寸异常
             if (screen.width < 200 || screen.height < 200) {
-                warnings.push({ level: 'medium', msg: '⚠️ 屏幕尺寸异常小' });
+                warnings.push({ level: 'medium', key: 'envSmallScreen' });
             }
             
             // 显示结果
             const container = document.getElementById('env-warnings');
             if (warnings.length === 0) {
                 container.className = 'env-warnings clean';
-                container.innerHTML = '<div class="env-warning-item">✅ 未检测到明显的自动化环境风险</div>';
+                container.innerHTML = `<div class="env-warning-item">${t('envClean')}</div>`;
             } else {
                 container.className = 'env-warnings';
                 container.innerHTML = warnings.map(w => 
-                    `<div class="env-warning-item">${w.msg}</div>`
+                    `<div class="env-warning-item">${t(w.key)}</div>`
                 ).join('');
             }
             
@@ -794,77 +1185,77 @@
             // 1. isTrusted 检查 (最重要)
             if (!data.isTrusted) {
                 score -= 40;
-                details.push('事件不可信(-40)');
+                details.push(t('riskUntrusted'));
             }
             
             // 2. 压力检查
             if (data.avgPressure === 0 || data.avgPressure === 0.5 || data.avgPressure === 1) {
                 score -= 15;
-                details.push('压力异常固定(-15)');
+                details.push(t('riskPressureFixed'));
             }
             if (data.pressureStd < 0.01 && data.duration > 100) {
                 score -= 10;
-                details.push('压力无变化(-10)');
+                details.push(t('riskPressureNoChange'));
             }
             
             // 3. 面积检查
             if (data.avgWidth === 0 || data.avgHeight === 0) {
                 score -= 10;
-                details.push('接触面积为0(-10)');
+                details.push(t('riskAreaZero'));
             }
             
             // 4. 轨迹检查
             if (data.distance === 0 && data.duration > 50) {
                 score -= 5;
-                details.push('完全无位移(-5)');
+                details.push(t('riskNoDisplacement'));
             }
             
             // 5. 直线度检查
             if (data.straightness > 98 && data.distance > 50) {
                 score -= 10;
-                details.push('轨迹过于笔直(-10)');
+                details.push(t('riskTooStraight'));
             }
             
             // 6. 路径效率检查
             if (data.pathEfficiency > 99 && data.distance > 30) {
                 score -= 8;
-                details.push('路径效率过高(-8)');
+                details.push(t('riskHighEfficiency'));
             }
             
             // 7. 速度一致性检查
             if (data.speedConsistency > 95 && data.samples > 10) {
                 score -= 8;
-                details.push('速度过于一致(-8)');
+                details.push(t('riskSpeedConsistent'));
             }
             
             // 8. 采样间隔检查
             if (data.intervalStd < 0.5 && data.samples > 10) {
                 score -= 8;
-                details.push('采样间隔过于均匀(-8)');
+                details.push(t('riskUniformInterval'));
             }
             
             // 9. 抖动检查
             if (data.jitter < 0.5 && data.duration > 200) {
                 score -= 5;
-                details.push('无自然抖动(-5)');
+                details.push(t('riskNoJitter'));
             }
             
             // 10. 贝塞尔匹配检查
             if (data.bezierMatch > 90 && data.samples > 20) {
                 score -= 8;
-                details.push('疑似贝塞尔曲线(-8)');
+                details.push(t('riskBezier'));
             }
             
             // 11. 熵值检查
             if (data.entropy < 1 && data.samples > 10) {
                 score -= 5;
-                details.push('轨迹熵值过低(-5)');
+                details.push(t('riskLowEntropy'));
             }
             
             // 12. 坐标精度检查
             if (data.coordPrecision === 0) {
                 score -= 5;
-                details.push('坐标无小数精度(-5)');
+                details.push(t('riskNoDecimal'));
             }
             
             return { score: Math.max(0, score), details };
@@ -956,7 +1347,7 @@
             document.getElementById('val-type').innerText = e.pointerType.toUpperCase();
             
             const trusted = document.getElementById('val-trusted');
-            trusted.innerText = e.isTrusted ? "TRUE ✓" : "FALSE ✗";
+            trusted.innerText = e.isTrusted ? t('trustedTrue') : t('trustedFalse');
             trusted.style.color = e.isTrusted ? "#00b894" : "#d63031";
             document.getElementById('card-trusted').className = e.isTrusted ? 'metric-card success' : 'metric-card danger';
             
@@ -1014,7 +1405,7 @@
             updateDashboard(e, '按下');
             
             pad.style.background = 'linear-gradient(135deg, #fd79a8 0%, #e84393 100%)';
-            pad.querySelector('.hint').innerHTML = `<div>检测中... 采样: <span id="sample-count">1</span></div>`;
+            pad.querySelector('.hint').innerHTML = `<div>${t('detecting')} ${t('sampling')}: <span id="sample-count">1</span></div>`;
         });
 
         pad.addEventListener('pointermove', (e) => {
@@ -1161,7 +1552,7 @@
             document.getElementById('val-interval-std').textContent = intervalStd.toFixed(2);
             document.getElementById('val-pause').textContent = pauseCount;
             document.getElementById('val-samples').textContent = tracePoints.length;
-            document.getElementById('val-timestamp').textContent = performance.now() % 1 !== 0 ? '高精度' : '低精度';
+            document.getElementById('val-timestamp').textContent = performance.now() % 1 !== 0 ? t('highPrecision') : t('lowPrecision');
             
             document.getElementById('val-pressure-min').textContent = minPressure.toFixed(3);
             document.getElementById('val-pressure-max').textContent = maxPressure.toFixed(3);
@@ -1169,14 +1560,14 @@
             document.getElementById('val-pressure-std').textContent = pressureStd.toFixed(4);
             document.getElementById('val-pressure-change').textContent = 
                 pressures.filter((p, i) => i > 0 && Math.abs(p - pressures[i-1]) > 0.01).length;
-            document.getElementById('val-force-touch').textContent = forceTouch ? '支持' : '不支持';
+            document.getElementById('val-force-touch').textContent = forceTouch ? t('supported') : t('notSupported');
             
             document.getElementById('val-start-coord').textContent = `${startX.toFixed(1)}, ${startY.toFixed(1)}`;
             document.getElementById('val-end-coord').textContent = `${e.clientX.toFixed(1)}, ${e.clientY.toFixed(1)}`;
             document.getElementById('val-distance').textContent = `${totalDistance.toFixed(1)} px`;
             document.getElementById('val-path-length').textContent = `${pathLength.toFixed(1)} px`;
             document.getElementById('val-efficiency').textContent = `${pathEfficiency.toFixed(1)}%`;
-            document.getElementById('val-coord-precision').textContent = `${coordPrecision} 位小数`;
+            document.getElementById('val-coord-precision').textContent = `${coordPrecision} ${t('decimals')}`;
             
             document.getElementById('val-entropy').textContent = entropy.toFixed(3);
             document.getElementById('val-bezier').textContent = `${bezierMatch.toFixed(1)}%`;
@@ -1230,18 +1621,18 @@
             
             const riskLevel = document.getElementById('risk-level');
             if (risk.score >= 80) {
-                riskLevel.textContent = '低风险 - 可能是真人';
+                riskLevel.textContent = t('riskLow');
                 riskLevel.className = 'risk-level risk-low';
             } else if (risk.score >= 50) {
-                riskLevel.textContent = '中等风险 - 需关注';
+                riskLevel.textContent = t('riskMedium');
                 riskLevel.className = 'risk-level risk-medium';
             } else {
-                riskLevel.textContent = '高风险 - 可能是机器';
+                riskLevel.textContent = t('riskHigh');
                 riskLevel.className = 'risk-level risk-high';
             }
             
             document.getElementById('risk-details').textContent = 
-                risk.details.length > 0 ? risk.details.join(', ') : '未发现可疑特征';
+                risk.details.length > 0 ? risk.details.join(', ') : t('noSuspiciousFeatures');
 
             // 添加日志
             addLog(e.pointerType, duration, totalDistance.toFixed(1), avgPressure.toFixed(3), 
@@ -1251,8 +1642,8 @@
             pad.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             pad.querySelector('.hint').innerHTML = `
                 <div style="font-size: 2rem; margin-bottom: 10px;">👇</div>
-                <div>再次操作测试</div>
-                <div style="margin-top: 8px; font-size: 0.8rem;">上次采样: ${tracePoints.length} 点</div>
+                <div>${t('testAgain')}</div>
+                <div style="margin-top: 8px; font-size: 0.8rem;">${t('lastSampling')}: ${tracePoints.length} ${t('points')}</div>
             `;
         };
 
@@ -1289,6 +1680,9 @@
             panel.classList.toggle('collapsed');
             title.classList.toggle('collapsed');
         }
+
+        // ==================== 初始化语言 ====================
+        updateLanguage();
 
     </script>
 </body>
