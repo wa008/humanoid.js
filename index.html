@@ -228,6 +228,26 @@
             max-height: 0;
         }
 
+        /* 触控笔专用指标折叠区 */
+        .stylus-details {
+            margin-top: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+        .stylus-details summary {
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: #666;
+            user-select: none;
+        }
+        .stylus-details summary:hover {
+            color: #333;
+        }
+        .stylus-details[open] summary {
+            margin-bottom: 5px;
+        }
+
         /* 环境检测警告 */
         .env-warnings {
             background: #ffe8e8;
@@ -345,36 +365,10 @@
                 <div class="metric-value" id="val-rotation-angle">0°</div>
                 <div class="metric-sub" data-i18n="rotationAngleHint">触摸椭圆旋转 0-90°</div>
             </div>
-            <div class="metric-card" id="card-twist">
-                <span class="metric-label" data-i18n="twist">扭转角度 (twist)</span>
-                <div class="metric-value" id="val-twist">0°</div>
-                <div class="metric-sub" data-i18n="twistHint">触控笔/手指旋转 0-359°</div>
-            </div>
-            <div class="metric-card" id="card-tilt-x">
-                <span class="metric-label" data-i18n="tiltX">倾斜X (tiltX)</span>
-                <div class="metric-value" id="val-tilt-x">0°</div>
-                <div class="metric-sub" data-i18n="tiltHint">触控笔倾斜角</div>
-            </div>
-            <div class="metric-card" id="card-tilt-y">
-                <span class="metric-label" data-i18n="tiltY">倾斜Y (tiltY)</span>
-                <div class="metric-value" id="val-tilt-y">0°</div>
-            </div>
             <div class="metric-card" id="card-radius">
                 <span class="metric-label" data-i18n="touchRadius">触摸半径 (radiusX/Y)</span>
                 <div class="metric-value" id="val-radius">0 x 0</div>
                 <div class="metric-sub" data-i18n="touchRadiusHint">Touch事件椭圆半径</div>
-            </div>
-            <div class="metric-card" id="card-altitude-azimuth">
-                <span class="metric-label" data-i18n="altitudeAzimuth">高度/方位角</span>
-                <div class="metric-value" id="val-altitude-azimuth">- / -</div>
-                <div class="metric-sub" data-i18n="altitudeAzimuthHint">触控笔空间角度</div>
-            </div>
-        </div>
-        <div class="dashboard">
-            <div class="metric-card" id="card-touch-event-source">
-                <span class="metric-label" data-i18n="eventSource">事件来源</span>
-                <div class="metric-value" id="val-event-source">-</div>
-                <div class="metric-sub" data-i18n="eventSourceHint">Pointer / Touch 事件</div>
             </div>
             <div class="metric-card" id="card-touch-count">
                 <span class="metric-label" data-i18n="activeTouchCount">活跃触摸点数</span>
@@ -382,6 +376,31 @@
                 <div class="metric-sub" data-i18n="multiTouchHint">多点触控检测</div>
             </div>
         </div>
+        <!-- 触控笔专用指标 (手指触摸时通常为0) -->
+        <details class="stylus-details">
+            <summary data-i18n="stylusMetrics">📝 触控笔专用指标 (展开)</summary>
+            <div class="dashboard dashboard-3col" style="margin-top: 10px;">
+                <div class="metric-card" id="card-twist">
+                    <span class="metric-label" data-i18n="twist">扭转角度 (twist)</span>
+                    <div class="metric-value" id="val-twist">0°</div>
+                    <div class="metric-sub" data-i18n="twistHint">触控笔旋转 0-359°</div>
+                </div>
+                <div class="metric-card" id="card-tilt-x">
+                    <span class="metric-label" data-i18n="tiltX">倾斜X (tiltX)</span>
+                    <div class="metric-value" id="val-tilt-x">0°</div>
+                    <div class="metric-sub" data-i18n="tiltHint">触控笔倾斜角</div>
+                </div>
+                <div class="metric-card" id="card-tilt-y">
+                    <span class="metric-label" data-i18n="tiltY">倾斜Y (tiltY)</span>
+                    <div class="metric-value" id="val-tilt-y">0°</div>
+                </div>
+                <div class="metric-card" id="card-altitude-azimuth">
+                    <span class="metric-label" data-i18n="altitudeAzimuth">高度/方位角</span>
+                    <div class="metric-value" id="val-altitude-azimuth">- / -</div>
+                    <div class="metric-sub" data-i18n="altitudeAzimuthHint">触控笔空间角度</div>
+                </div>
+            </div>
+        </details>
     </div>
 
     <!-- 滑动轨迹分析 -->
@@ -662,7 +681,7 @@
                 rotationAngle: '旋转角度 (rotationAngle)',
                 rotationAngleHint: '触摸椭圆旋转 0-90°',
                 twist: '扭转角度 (twist)',
-                twistHint: '触控笔/手指旋转 0-359°',
+                twistHint: '触控笔旋转 0-359°',
                 tiltX: '倾斜X (tiltX)',
                 tiltY: '倾斜Y (tiltY)',
                 tiltHint: '触控笔倾斜角',
@@ -674,6 +693,7 @@
                 eventSourceHint: 'Pointer / Touch 事件',
                 activeTouchCount: '活跃触摸点数',
                 multiTouchHint: '多点触控检测',
+                stylusMetrics: '📝 触控笔专用指标 (展开)',
                 
                 // 滑动分析
                 swipeAnalysis: '📈 滑动轨迹分析',
@@ -837,7 +857,7 @@
                 rotationAngle: 'Rotation Angle',
                 rotationAngleHint: 'Touch ellipse rotation 0-90°',
                 twist: 'Twist',
-                twistHint: 'Stylus/finger rotation 0-359°',
+                twistHint: 'Stylus rotation 0-359°',
                 tiltX: 'Tilt X',
                 tiltY: 'Tilt Y',
                 tiltHint: 'Stylus tilt angle',
@@ -848,6 +868,8 @@
                 eventSource: 'Event Source',
                 eventSourceHint: 'Pointer / Touch events',
                 activeTouchCount: 'Active Touch Count',
+                multiTouchHint: 'Multi-touch detection',
+                stylusMetrics: '📝 Stylus-only Metrics (expand)',
                 multiTouchHint: 'Multi-touch detection',
                 
                 // Swipe analysis
