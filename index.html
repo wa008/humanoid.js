@@ -336,6 +336,54 @@
         </div>
     </div>
 
+    <!-- 触摸几何分析 -->
+    <div class="section-title collapsible" onclick="togglePanel('touch-geometry-panel')" data-i18n="touchGeometry">🖐️ 触摸几何分析</div>
+    <div class="panel-content" id="touch-geometry-panel">
+        <div class="dashboard dashboard-3col">
+            <div class="metric-card" id="card-rotation-angle">
+                <span class="metric-label" data-i18n="rotationAngle">旋转角度 (rotationAngle)</span>
+                <div class="metric-value" id="val-rotation-angle">0°</div>
+                <div class="metric-sub" data-i18n="rotationAngleHint">触摸椭圆旋转 0-90°</div>
+            </div>
+            <div class="metric-card" id="card-twist">
+                <span class="metric-label" data-i18n="twist">扭转角度 (twist)</span>
+                <div class="metric-value" id="val-twist">0°</div>
+                <div class="metric-sub" data-i18n="twistHint">触控笔/手指旋转 0-359°</div>
+            </div>
+            <div class="metric-card" id="card-tilt-x">
+                <span class="metric-label" data-i18n="tiltX">倾斜X (tiltX)</span>
+                <div class="metric-value" id="val-tilt-x">0°</div>
+                <div class="metric-sub" data-i18n="tiltHint">触控笔倾斜角</div>
+            </div>
+            <div class="metric-card" id="card-tilt-y">
+                <span class="metric-label" data-i18n="tiltY">倾斜Y (tiltY)</span>
+                <div class="metric-value" id="val-tilt-y">0°</div>
+            </div>
+            <div class="metric-card" id="card-radius">
+                <span class="metric-label" data-i18n="touchRadius">触摸半径 (radiusX/Y)</span>
+                <div class="metric-value" id="val-radius">0 x 0</div>
+                <div class="metric-sub" data-i18n="touchRadiusHint">Touch事件椭圆半径</div>
+            </div>
+            <div class="metric-card" id="card-altitude-azimuth">
+                <span class="metric-label" data-i18n="altitudeAzimuth">高度/方位角</span>
+                <div class="metric-value" id="val-altitude-azimuth">- / -</div>
+                <div class="metric-sub" data-i18n="altitudeAzimuthHint">触控笔空间角度</div>
+            </div>
+        </div>
+        <div class="dashboard">
+            <div class="metric-card" id="card-touch-event-source">
+                <span class="metric-label" data-i18n="eventSource">事件来源</span>
+                <div class="metric-value" id="val-event-source">-</div>
+                <div class="metric-sub" data-i18n="eventSourceHint">Pointer / Touch 事件</div>
+            </div>
+            <div class="metric-card" id="card-touch-count">
+                <span class="metric-label" data-i18n="activeTouchCount">活跃触摸点数</span>
+                <div class="metric-value" id="val-touch-count">0</div>
+                <div class="metric-sub" data-i18n="multiTouchHint">多点触控检测</div>
+            </div>
+        </div>
+    </div>
+
     <!-- 滑动轨迹分析 -->
     <div class="section-title collapsible" onclick="togglePanel('swipe-panel')" data-i18n="swipeAnalysis">📈 滑动轨迹分析</div>
     <div class="panel-content" id="swipe-panel">
@@ -609,6 +657,24 @@
                 trustedTrue: 'TRUE ✓',
                 trustedFalse: 'FALSE ✗',
                 
+                // 触摸几何分析
+                touchGeometry: '🖐️ 触摸几何分析',
+                rotationAngle: '旋转角度 (rotationAngle)',
+                rotationAngleHint: '触摸椭圆旋转 0-90°',
+                twist: '扭转角度 (twist)',
+                twistHint: '触控笔/手指旋转 0-359°',
+                tiltX: '倾斜X (tiltX)',
+                tiltY: '倾斜Y (tiltY)',
+                tiltHint: '触控笔倾斜角',
+                touchRadius: '触摸半径 (radiusX/Y)',
+                touchRadiusHint: 'Touch事件椭圆半径',
+                altitudeAzimuth: '高度/方位角',
+                altitudeAzimuthHint: '触控笔空间角度',
+                eventSource: '事件来源',
+                eventSourceHint: 'Pointer / Touch 事件',
+                activeTouchCount: '活跃触摸点数',
+                multiTouchHint: '多点触控检测',
+                
                 // 滑动分析
                 swipeAnalysis: '📈 滑动轨迹分析',
                 avgVelocity: '平均速度',
@@ -765,6 +831,24 @@
                 isTrusted: 'Event Trusted (isTrusted)',
                 trustedTrue: 'TRUE ✓',
                 trustedFalse: 'FALSE ✗',
+                
+                // Touch geometry analysis
+                touchGeometry: '🖐️ Touch Geometry Analysis',
+                rotationAngle: 'Rotation Angle',
+                rotationAngleHint: 'Touch ellipse rotation 0-90°',
+                twist: 'Twist',
+                twistHint: 'Stylus/finger rotation 0-359°',
+                tiltX: 'Tilt X',
+                tiltY: 'Tilt Y',
+                tiltHint: 'Stylus tilt angle',
+                touchRadius: 'Touch Radius (radiusX/Y)',
+                touchRadiusHint: 'Touch event ellipse radius',
+                altitudeAzimuth: 'Altitude/Azimuth',
+                altitudeAzimuthHint: 'Stylus spatial angle',
+                eventSource: 'Event Source',
+                eventSourceHint: 'Pointer / Touch events',
+                activeTouchCount: 'Active Touch Count',
+                multiTouchHint: 'Multi-touch detection',
                 
                 // Swipe analysis
                 swipeAnalysis: '📈 Swipe Trajectory Analysis',
@@ -1356,6 +1440,47 @@
                 forceTouch = true;
                 document.getElementById('val-force-touch').innerText = e.force.toFixed(3);
             }
+            
+            // ==================== 触摸几何数据 (Pointer Events) ====================
+            // twist: 触控笔/手指围绕主轴的旋转角度 (0-359°)
+            const twist = e.twist || 0;
+            document.getElementById('val-twist').innerText = twist.toFixed(1) + '°';
+            
+            // tiltX/tiltY: 触控笔相对屏幕的倾斜角度 (-90 到 90°)
+            const tiltX = e.tiltX || 0;
+            const tiltY = e.tiltY || 0;
+            document.getElementById('val-tilt-x').innerText = tiltX.toFixed(1) + '°';
+            document.getElementById('val-tilt-y').innerText = tiltY.toFixed(1) + '°';
+            
+            // altitudeAngle/azimuthAngle: 触控笔的空间角度 (弧度)
+            const altitude = e.altitudeAngle !== undefined ? (e.altitudeAngle * 180 / Math.PI).toFixed(1) : '-';
+            const azimuth = e.azimuthAngle !== undefined ? (e.azimuthAngle * 180 / Math.PI).toFixed(1) : '-';
+            document.getElementById('val-altitude-azimuth').innerText = `${altitude}° / ${azimuth}°`;
+            
+            // 更新事件来源
+            document.getElementById('val-event-source').innerText = 'Pointer';
+        }
+        
+        // ==================== 更新 Touch 事件数据 ====================
+        function updateTouchGeometry(touchEvent) {
+            if (!touchEvent.touches || touchEvent.touches.length === 0) return;
+            
+            const touch = touchEvent.touches[0];
+            
+            // rotationAngle: 触摸椭圆相对屏幕的旋转角度 (0-90°)
+            const rotationAngle = touch.rotationAngle || 0;
+            document.getElementById('val-rotation-angle').innerText = rotationAngle.toFixed(1) + '°';
+            
+            // radiusX/radiusY: 触摸椭圆的半径
+            const radiusX = touch.radiusX || 0;
+            const radiusY = touch.radiusY || 0;
+            document.getElementById('val-radius').innerText = `${radiusX.toFixed(1)} x ${radiusY.toFixed(1)}`;
+            
+            // 更新活跃触摸点数
+            document.getElementById('val-touch-count').innerText = touchEvent.touches.length;
+            
+            // 更新事件来源
+            document.getElementById('val-event-source').innerText = 'Pointer + Touch';
         }
 
         // ==================== 事件处理 ====================
@@ -1649,6 +1774,30 @@
 
         pad.addEventListener('pointerup', endHandler);
         pad.addEventListener('pointercancel', endHandler);
+
+        // ==================== Touch Events 监听器 (同时采集) ====================
+        // Touch Events 提供 rotationAngle, radiusX, radiusY 等 Pointer Events 没有的属性
+        pad.addEventListener('touchstart', (e) => {
+            updateTouchGeometry(e);
+        }, { passive: true });
+        
+        pad.addEventListener('touchmove', (e) => {
+            updateTouchGeometry(e);
+        }, { passive: true });
+        
+        pad.addEventListener('touchend', (e) => {
+            // touchend 时 touches 为空，使用 changedTouches
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                const touch = e.changedTouches[0];
+                const rotationAngle = touch.rotationAngle || 0;
+                document.getElementById('val-rotation-angle').innerText = rotationAngle.toFixed(1) + '°';
+                
+                const radiusX = touch.radiusX || 0;
+                const radiusY = touch.radiusY || 0;
+                document.getElementById('val-radius').innerText = `${radiusX.toFixed(1)} x ${radiusY.toFixed(1)}`;
+            }
+            document.getElementById('val-touch-count').innerText = e.touches.length;
+        }, { passive: true });
 
         // ==================== 添加日志 ====================
         function addLog(type, duration, distance, pressure, velocity, riskScore) {
