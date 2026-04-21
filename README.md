@@ -1,8 +1,12 @@
 # humanoid.js
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://wa008.github.io/humanoid.js/)
+[![Single File](https://img.shields.io/badge/single--file-zero%20deps-informational)](./index.html)
+
 > Zero-dependency, single-file web tool that scores how human-looking a pointer/touch interaction is — and tells you which specific signals gave it away.
 
-**[👉 Live demo: open `index.html` in any browser](./index.html)**
+**[👉 Live demo](https://wa008.github.io/humanoid.js/)** (or open `index.html` in any browser)
 
 ---
 
