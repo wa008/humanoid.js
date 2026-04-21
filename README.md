@@ -6,7 +6,7 @@
 
 > Zero-dependency, single-file web tool that scores how human-looking a pointer/touch interaction is — and tells you which specific signals gave it away.
 
-**[👉 Live demo](https://wa008.github.io/humanoid.js/)** (or open `index.html` in any browser)
+**[👉 Live demo](https://humanoid-js.pages.dev/)** (or open `index.html` in any browser)
 
 ![humanoid.js screenshot — risk score 100 on the left, live metrics on the right](./humanoid-example.png)
 
