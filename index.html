@@ -685,8 +685,8 @@
 
     <script>
         // ==================== 国际化 (i18n) ====================
-        // 默认英文, 仅在浏览器首选语言为中文时回落到 zh; localStorage 偏好优先
-        let currentLang = (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+        // 默认英文; localStorage 偏好优先 (用户可通过右上角按钮切换到中文)
+        let currentLang = 'en';
         
         const translations = {
             zh: {
