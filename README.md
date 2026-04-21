@@ -8,6 +8,8 @@
 
 **[👉 Live demo](https://wa008.github.io/humanoid.js/)** (or open `index.html` in any browser)
 
+![humanoid.js screenshot — risk score 100 on the left, live metrics on the right](./humanoid-example.png)
+
 ---
 
 ## What it does
@@ -39,13 +41,14 @@ xdg-open index.html        # Linux
 python3 -m http.server 8000
 ```
 
-Use `?lang=en` or click the `EN / 中文` toggle for language.
+Page defaults to English; click the `EN / 中文` toggle in the top-right to switch (preference is remembered in `localStorage`).
 
 ## Repository layout
 
 ```
 .
-├── index.html      # the whole app — HTML + CSS + JS, no build
+├── index.html              # the whole app — HTML + CSS + JS, no build
+├── humanoid-example.png    # README screenshot
 ├── LICENSE
 └── README.md
 ```
