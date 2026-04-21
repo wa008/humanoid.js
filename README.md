@@ -20,62 +20,7 @@ Every click, long-press, or swipe on the test pad is analyzed in real time acros
 | Advanced              | entropy, angle stddev, speed consistency, coordinate decimal precision  |
 | Environment           | WebDriver, HeadlessChrome, Selenium markers, UA / touch mismatch, etc.  |
 
-The output is a **0–100 risk score** (higher = more human-like) plus a list of exactly which rules fired.
-
-## Why "LLM-friendly"?
-
-A common question: *"If I automate my clicks with Puppeteer / ADB / a CDP driver, will they look human?"*
-
-humanoid.js answers this with a **stable, structured JSON report** that any LLM agent or automation script can consume to iterate on its click strategy.
-
-### Programmatic API
-
-```js
-// Latest analysis (plain object) — after the user releases the pointer
-window.humanoid.getReport();
-
-// Last 50 analyses
-window.humanoid.getHistory();
-
-// Latest analysis as a JSON string
-window.humanoid.getReportJSON();
-
-// Listen for new analyses
-window.addEventListener('humanoid:analysis', (e) => {
-    console.log(e.detail.risk.score, e.detail.risk.reasons);
-});
-```
-
-For environments where you can only read the DOM (no script eval), the most recent report is also mirrored into an inline `<script type="application/json" id="humanoid-report-json">` tag, ready to parse.
-
-### Report shape
-
-```json
-{
-  "timestamp": 1710000000000,
-  "pointerType": "touch",
-  "isTrusted": true,
-  "duration": 312,
-  "samples": 18,
-  "displacement": 142.6,
-  "pathLength": 151.2,
-  "pressure":     { "min": 0.21, "max": 0.74, "avg": 0.48, "std": 0.13, "changeCount": 11, "forceTouchSupported": false },
-  "contactArea":  { "avgWidth": 22.4, "avgHeight": 22.4 },
-  "velocity":     { "avg": 486.3, "std": 112.7 },
-  "interval":     { "avg": 12.4, "std": 3.1, "pauseCount": 0 },
-  "trajectory":   { "straightness": 94.3, "pathEfficiency": 94.3, "curvature": 1.82, "jitter": 0.91, "bezierMatch": 42.1, "directionChanges": 2 },
-  "advanced":     { "entropy": 3.112, "angleStd": 8.43, "speedConsistency": 72.5, "coordPrecision": 2 },
-  "risk":         { "score": 92, "level": "low", "verdict": "likely-human", "reasons": [] },
-  "environment":  { "userAgent": "...", "webdriver": false, "maxTouchPoints": 5, "devicePixelRatio": 2 }
-}
-```
-
-### Typical LLM-driven loop
-
-1. Agent drives a synthetic click/swipe on the pad.
-2. Agent reads `window.humanoid.getReport()`.
-3. If `risk.verdict !== 'likely-human'`, agent inspects `risk.reasons` and adjusts (add jitter, randomize interval, fake pressure, etc.).
-4. Repeat until the score is acceptable.
+The output is a **0–100 risk score** (higher = more human-like) plus a list of exactly which rules fired, shown directly on the page.
 
 ## Usage
 
@@ -97,7 +42,6 @@ Use `?lang=en` or click the `EN / 中文` toggle for language.
 ```
 .
 ├── index.html      # the whole app — HTML + CSS + JS, no build
-├── adb_click/      # companion shell/Python tools for simulating Android clicks
 ├── LICENSE
 └── README.md
 ```
@@ -107,7 +51,6 @@ Use `?lang=en` or click the `EN / 中文` toggle for language.
 Issues and PRs welcome. Please keep:
 - Single-file (`index.html`) with no build tooling.
 - No runtime dependencies.
-- New signals should feed into both the dashboard and the JSON report.
 
 ## License
 
