@@ -102,16 +102,17 @@
         .risk-high { background: #d63031; }
         .risk-details { font-size: 0.75rem; margin-top: 10px; opacity: 0.7; }
 
-        /* 实时数据显示面板 */
+        /* 实时数据显示面板: 自适应多列, PC 宽屏下自动排 3-6 列, 移动端 2 列 */
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 8px;
             margin-bottom: 15px;
         }
 
+        /* 保留别名以兼容 HTML; 与 .dashboard 同一规则 */
         .dashboard-3col {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         }
 
         .metric-card {
@@ -313,6 +314,41 @@
             position: relative;
             padding-right: 80px;
         }
+
+        /* ==================== 页面布局容器 ==================== */
+        .app-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        /* 默认 (移动端): 单列, left/right 依次堆叠 */
+        .app-body {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        /* PC 双栏: 左栏固定 360px (risk score + test pad), 右栏占满剩余 */
+        @media (min-width: 960px) {
+            .app-body {
+                grid-template-columns: 360px 1fr;
+                align-items: start;
+            }
+            /* 左栏 sticky, 滚动时始终可见 */
+            .app-left {
+                position: sticky;
+                top: 20px;
+            }
+            /* 左栏内 test-pad 稍高一点以更好展示轨迹 */
+            .app-left #test-pad {
+                height: 320px;
+            }
+        }
+
+        /* 右栏内容之间的间距微调 */
+        .app-right > .section-title:first-child {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
@@ -320,26 +356,33 @@
     <!-- 语言切换按钮 -->
     <button class="lang-toggle" id="lang-toggle" onclick="toggleLanguage()">EN</button>
 
-    <h1 data-i18n="title">🤖 交互信号分析器 v2.0</h1>
+    <div class="app-container">
+        <h1 data-i18n="title">🤖 交互信号分析器 v2.0</h1>
 
-    <!-- 风险评分 -->
-    <div class="risk-score-container">
-        <div class="risk-score-label" data-i18n="riskScoreLabel">实时风控评分</div>
-        <div class="risk-score" id="risk-score">--</div>
-        <div class="risk-level risk-low" id="risk-level" data-i18n="waitingDetection">等待检测</div>
-        <div class="risk-details" id="risk-details" data-i18n="startHint">在测试区域进行操作以开始分析</div>
-    </div>
+        <div class="app-body">
+            <!-- 左栏: risk score + test pad (PC 下 sticky) -->
+            <div class="app-left">
+                <!-- 风险评分 -->
+                <div class="risk-score-container">
+                    <div class="risk-score-label" data-i18n="riskScoreLabel">实时风控评分</div>
+                    <div class="risk-score" id="risk-score">--</div>
+                    <div class="risk-level risk-low" id="risk-level" data-i18n="waitingDetection">等待检测</div>
+                    <div class="risk-details" id="risk-details" data-i18n="startHint">在测试区域进行操作以开始分析</div>
+                </div>
 
-    <!-- 测试区域 -->
-    <div id="test-pad">
-        <canvas id="trace-canvas"></canvas>
-        <div class="hint">
-            <div style="font-size: 2rem; margin-bottom: 10px;">👇</div>
-            <div data-i18n="testPadHint">在此区域 点击、长按 或 滑动</div>
-            <div style="margin-top: 8px; font-size: 0.8rem;" data-i18n="testPadSubHint">(支持多指触控与压感，滑动轨迹可视化)</div>
-        </div>
-    </div>
+                <!-- 测试区域 -->
+                <div id="test-pad">
+                    <canvas id="trace-canvas"></canvas>
+                    <div class="hint">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">👇</div>
+                        <div data-i18n="testPadHint">在此区域 点击、长按 或 滑动</div>
+                        <div style="margin-top: 8px; font-size: 0.8rem;" data-i18n="testPadSubHint">(支持多指触控与压感，滑动轨迹可视化)</div>
+                    </div>
+                </div>
+            </div>
 
+            <!-- 右栏: 环境检测 + 指标面板 + 历史日志 -->
+            <div class="app-right">
     <!-- 环境检测 -->
     <div class="section-title" data-i18n="envRiskDetection">🔍 环境风险检测</div>
     <div class="env-warnings" id="env-warnings">
@@ -636,6 +679,9 @@
             <li data-i18n="tipPathEfficiency"><b>路径效率:</b> 真人滑动效率约70-90%；机器接近100%</li>
         </ul>
     </div>
+            </div><!-- /.app-right -->
+        </div><!-- /.app-body -->
+    </div><!-- /.app-container -->
 
     <script>
         // ==================== 国际化 (i18n) ====================
