@@ -9,8 +9,3 @@ Thumbs.db
 *.log
 node_modules/
 dist/
-
-# Test/dev artifacts captured from a device
-adb_click/screen.png
-adb_click/window_dump.xml
-humanoid-report-*.json

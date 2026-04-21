@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>信号指纹采集测试</title>
+    <title>humanoid.js — Human-Interaction Signal Analyzer</title>
+    <meta name="description" content="Zero-dependency, single-file web tool that scores how human-looking a click, long-press, or swipe is across ~30 signals click-fraud and anti-bot systems actually use.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wa008.github.io/humanoid.js/">
+    <meta property="og:title" content="humanoid.js — Human-Interaction Signal Analyzer">
+    <meta property="og:description" content="Score how human-looking a click, long-press, or swipe is across ~30 signals — in any browser, no build, no dependencies.">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="humanoid.js — Human-Interaction Signal Analyzer">
+    <meta name="twitter:description" content="Score how human-looking a click, long-press, or swipe is across ~30 signals — in any browser, no build, no dependencies.">
     <style>
         * { box-sizing: border-box; }
         body {
@@ -624,7 +636,8 @@
 
     <script>
         // ==================== 国际化 (i18n) ====================
-        let currentLang = 'zh';
+        // 默认英文, 仅在浏览器首选语言为中文时回落到 zh; localStorage 偏好优先
+        let currentLang = (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
         
         const translations = {
             zh: {
@@ -998,9 +1011,12 @@
             // Update toggle button
             document.getElementById('lang-toggle').textContent = t('langToggle');
             
-            // Update page title
-            document.title = currentLang === 'zh' ? '信号指纹采集测试' : 'Signal Fingerprint Test';
-            
+            // Update page title + <html lang> (影响 SEO 和屏幕阅读器)
+            document.title = currentLang === 'zh'
+                ? 'humanoid.js — 交互信号分析器'
+                : 'humanoid.js — Human-Interaction Signal Analyzer';
+            document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+
             // Re-run environment detection to update messages
             detectEnvironmentRisks();
         }
